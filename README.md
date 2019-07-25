@@ -1,12 +1,15 @@
 # persons-names-MK-rdf
-A database of Middle Kingdom names: rdf mapping and ontology
+A database of Middle Kingdom names: rdf mappings
+
+## This repository  
+This repository contains R2RML mappings for converting the dataset Persons and Names of the Middle Kingdom from MySQL to RDF, based on the PNM ontology, available at https://pnm.uni-mainz.de/ontology/  
 
 ## Data preparation
-Source data is available under [doi:10.5281/zenodo.1411392](http://dx.doi.org/10.5281/zenodo.1411392)
-To prepare data, you should execute  	`prepare_data.sql` 
+Source data is available under [doi:10.5281/zenodo.1411391](http://dx.doi.org/10.5281/zenodo.1411391)
+Please execute  	`prepare_data.sql` to prepare the data before converting the data to RDF.
 This set of instructions creates necessary temporary tables and cleans up some data
 
-## Tools for tranforming the data from MySQL to RDF using the R2RML mappings provided
+## Tools for tranforming the data from MySQL to RDF using  R2RML mappings
 * [db2triples](https://github.com/antidot/db2triples) has issues with semicolons in joined SQL queries and a deprecated dependency, but otherwise works fine (yet slow)
 
 * [Morph-RDB](https://github.com/oeg-upm/morph-rdb) has issues with turtle escape codes and rr:language
