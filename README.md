@@ -10,7 +10,7 @@ Please execute  	`prepare_data.sql` to prepare the data before converting the da
 This set of instructions creates necessary temporary tables and cleans up some data
 
 ## Tools for tranforming the data from MySQL to RDF using  R2RML mappings
-* [db2triples](https://github.com/antidot/db2triples) has issues with semicolons in joined SQL queries and a deprecated dependency (all fixed in [thı͗s fork](https://github.com/ailintom/db2triples)), but otherwise works fine (yet slow)
+* [db2triples](https://github.com/antidot/db2triples) is slow but otherwise works fine and is fully compatible with the PNM R2RML mapping; this tool is used to produce the RDF dump with the Persons and Names of the Middle Kingdom
 
 * [Morph-RDB](https://github.com/oeg-upm/morph-rdb) has issues with turtle escape codes and rr:language
 
