@@ -461,7 +461,7 @@ FROM inscriptions
 <#find_groups_production_map> a rr:TriplesMap;
     rr:logicalTable [rr:sqlQuery """
 SELECT record_id_from_id(find_groups_id) as find_groups_ids,  dating, dating_note
-FROM inscriptions where  NOT ISNULL(dating)
+FROM find_groups where  NOT ISNULL(dating)
 """;];
     rr:subjectMap [
         rr:template "https://pnm.uni-mainz.de/group/{find_groups_ids}#production" ;
