@@ -9,8 +9,8 @@ These can be used in diverse applications, for example, one can map query result
 An error message may be displayed, but the endpoint is still added.
 4. With the Persons and Names of the Middle Kingdom SPARQL endpoint, you can execute queries, including geographical coordinates and put them on the map.
 5. For example the following query returns Middle Kingdom name scarabs:
-   ```sparql
-   SELECT ?item ?lat ?lon  WHERE { 
+```sparql
+  SELECT ?item ?lat ?lon  WHERE { 
   ?object <http://lawd.info/ontology/foundAt> ?place ; 
   <http://www.cidoc-crm.org/cidoc-crm/P128_carries> ?inscription ;
   <http://www.w3.org/2004/02/skos/core#prefLabel> ?item ; 
@@ -20,10 +20,10 @@ An error message may be displayed, but the endpoint is still added.
   ?place <http://www.cidoc-crm.org/cidoc-crm/P168_place_is_defined_by> / <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ?lat . 
   ?place <http://www.cidoc-crm.org/cidoc-crm/P168_place_is_defined_by> / <http://www.w3.org/2003/01/geo/wgs84_pos#long> ?lon . } 
  LIMIT 5000
-   ```
+```
 And the following query does the same with Second Intermediate Period name scarabs.
-   ```sparql
-      SELECT ?item ?lat ?lon  WHERE { 
+```sparql
+  SELECT ?item ?lat ?lon  WHERE { 
   ?object <http://lawd.info/ontology/foundAt> ?place ; 
   <http://www.cidoc-crm.org/cidoc-crm/P128_carries> ?inscription ;
   <http://www.w3.org/2004/02/skos/core#prefLabel> ?item ; 
