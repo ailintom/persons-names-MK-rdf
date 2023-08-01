@@ -9,7 +9,7 @@ These can be used in diverse applications, for example, one can map query result
 An error message may be displayed, but the endpoint is still added.
 4. With the Persons and Names of the Middle Kingdom SPARQL endpoint, you can execute queries, including geographical coordinates and put them on the map.
 5. For example the following query returns Middle Kingdom name scarabs:
-  ```sparql
+   ```sparql
    SELECT ?item ?lat ?lon  WHERE { 
   ?object <http://lawd.info/ontology/foundAt> ?place ; 
   <http://www.cidoc-crm.org/cidoc-crm/P128_carries> ?inscription ;
