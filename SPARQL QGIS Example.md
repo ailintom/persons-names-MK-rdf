@@ -3,7 +3,7 @@
 Since version 4, the Persons and Names of the Middle Kingdom dataset includes geographical coordinates of most places referred to in the database. 
 These can be used in diverse applications, for example, one can map query results with GIS software. In this example, I use QGIS and a free SPARQL plugin for QGIS.
 
-1. [QGIS](https://qgis.org/en/site/) and [SPARQLing Unicorn QGIS Plugin](https://github.com/sparqlunicorn/sparqlunicornGoesGIS) are both free multiplatform software.
+1. [QGIS](https://qgis.org/en/site/) and [SPARQLing Unicorn QGIS Plugin](https://github.com/sparqlunicorn/sparqlunicornGoesGIS) are both free crossplatform software.
 2. SPARQLing Unicorn QGIS Plugin should be installed manually, because it is not yet an official plugin.
 3. In SPARQLing Unicorn QGIS Plugin, you can add the Persons and Names of the Middle Kingdom SPARQL endpoint https://pnm.uni-mainz.de/sparql through "Quick Add RDF Resource" disabling the "detect namespaces" checkbox. 
 An error message may be displayed, but the endpoint is still added.
