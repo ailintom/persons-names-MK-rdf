@@ -1403,8 +1403,8 @@ FROM personal_names WHERE NOT ISNULL(usage_area) OR NOT ISNULL(usage_period) OR 
 <#ranke_name_map> a rr:TriplesMap;
     rr:logicalTable [rr:sqlQuery """
 select
-  personal_names.personal_names_id personal_names_id, record_id_from_id(personal_names.personal_names_id) personal_names_id_short,
-  TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(personal_names.ranke, ';', numbers.n), ';', -1)) ranke
+  personal_names.personal_names_id personal_names_id, record_id_from_id(personal_names.personal_names_id) as personal_names_id_short,
+  TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(personal_names.ranke, ';', numbers.n), ';', -1)) as ranke
 from
   (select 1 n union 
    select 2 union all select 3 union all select 4 union all SELECT 5 union all SELECT 6 union all SELECT 7 union all SELECT 8 union all SELECT 9 union all SELECT 10 union all SELECT 11 union all SELECT 12 union all SELECT 13 union all SELECT 14 union all SELECT 15 union all SELECT 16 union all SELECT 17 union all SELECT 18 union all SELECT 19 union all SELECT 20 union all SELECT 21 union all SELECT 22) numbers INNER JOIN personal_names
@@ -1428,8 +1428,8 @@ order by
 <#scheele-schweitzer_name_map> a rr:TriplesMap;
     rr:logicalTable [rr:sqlQuery """
 select
-  personal_names.personal_names_id personal_names_id, record_id_from_id(personal_names.personal_names_id) personal_names_id_short,
-  TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(personal_names.`scheele-schweitzer`, ';', numbers.n), ';', -1)) `scheele-schweitzer`
+  personal_names.personal_names_id personal_names_id, record_id_from_id(personal_names.personal_names_id) as personal_names_id_short,
+  TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(personal_names.`scheele-schweitzer`, ';', numbers.n), ';', -1)) as `scheele-schweitzer`
 from
   (select 1 n union 
    select 2 union all select 3 union all select 4 union all SELECT 5 union all SELECT 6 union all SELECT 7 union all SELECT 8 union all SELECT 9 union all SELECT 10 union all SELECT 11 union all SELECT 12 union all SELECT 13 union all SELECT 14 union all SELECT 15 union all SELECT 16 union all SELECT 17 union all SELECT 18 union all SELECT 19 union all SELECT 20 union all SELECT 21 union all SELECT 22) numbers INNER JOIN personal_names
@@ -1745,7 +1745,7 @@ FROM criteria
 	#name_types_xref
 <#name_type_xref_map> a rr:TriplesMap;
     rr:logicalTable [rr:sqlQuery """
-SELECT *, record_id_from_id(names_types_xref_id) names_types_xref_id_short, record_id_from_id(personal_names_id) personal_names_id_short, record_id_from_id(name_types_id) name_types_id_short
+SELECT *, record_id_from_id(names_types_xref_id) names_types_xref_id_short, record_id_from_id(personal_names_id) as personal_names_id_short, record_id_from_id(name_types_id) name_types_id_short
 FROM names_types_xref
 """;];
     rr:subjectMap [
@@ -1823,8 +1823,8 @@ FROM titles WHERE NOT ISNULL(usage_area) OR NOT ISNULL(usage_period) OR NOT ISNU
 <#ayedi_title_map> a rr:TriplesMap;
     rr:logicalTable [rr:sqlQuery """
 select
-  titles.titles_id titles_id, record_id_from_id(titles.titles_id) titles_id_short,
-  TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(titles.ayedi, ';', numbers.n), ';', -1)) ayedi
+  titles.titles_id titles_id, record_id_from_id(titles.titles_id) as titles_id_short,
+  TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(titles.ayedi, ';', numbers.n), ';', -1)) as ayedi
 from
   (select 1 n union 
    select 2 union all select 3 union all select 4 union all SELECT 5 union all SELECT 6 union all SELECT 7 union all SELECT 8 union all SELECT 9 union all SELECT 10 union all SELECT 11 union all SELECT 12 union all SELECT 13 union all SELECT 14 union all SELECT 15 union all SELECT 16 union all SELECT 17 union all SELECT 18 union all SELECT 19 union all SELECT 20 union all SELECT 21 union all SELECT 22) numbers
@@ -1849,8 +1849,8 @@ order by
 <#taylor_title_map> a rr:TriplesMap;
     rr:logicalTable [rr:sqlQuery """
 select
-  titles.titles_id titles_id, record_id_from_id(titles.titles_id) titles_id_short,
-  TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(titles.taylor, ';', numbers.n), ';', -1)) taylor
+  titles.titles_id titles_id, record_id_from_id(titles.titles_id) as titles_id_short,
+  TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(titles.taylor, ';', numbers.n), ';', -1)) as taylor
 from
   (select 1 n union 
    select 2 union all select 3 union all select 4 union all SELECT 5 union all SELECT 6 union all SELECT 7 union all SELECT 8 union all SELECT 9 union all SELECT 10 union all SELECT 11 union all SELECT 12 union all SELECT 13 union all SELECT 14 union all SELECT 15 union all SELECT 16 union all SELECT 17 union all SELECT 18 union all SELECT 19 union all SELECT 20 union all SELECT 21 union all SELECT 22) numbers
@@ -1875,8 +1875,8 @@ order by
 <#hannig_title_map> a rr:TriplesMap;
     rr:logicalTable [rr:sqlQuery """
 select
-  titles.titles_id titles_id, record_id_from_id(titles.titles_id) titles_id_short,
-  TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(titles.hannig, ';', numbers.n), ';', -1)) hannig
+  titles.titles_id titles_id, record_id_from_id(titles.titles_id) as titles_id_short,
+  TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(titles.hannig, ';', numbers.n), ';', -1)) as hannig
 from
   (select 1 n union 
    select 2 union all select 3 union all select 4 union all SELECT 5 union all SELECT 6 union all SELECT 7 union all SELECT 8 union all SELECT 9 union all SELECT 10 union all SELECT 11 union all SELECT 12 union all SELECT 13 union all SELECT 14 union all SELECT 15 union all SELECT 16 union all SELECT 17 union all SELECT 18 union all SELECT 19 union all SELECT 20 union all SELECT 21 union all SELECT 22) numbers
@@ -1901,8 +1901,8 @@ order by
 <#ward_fischer_map> a rr:TriplesMap;
     rr:logicalTable [rr:sqlQuery """
 select
-  titles.titles_id titles_id, record_id_from_id(titles.titles_id) titles_id_short,
-  TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(titles.ward_fischer, ';', numbers.n), ';', -1)) ward_fischer
+  titles.titles_id titles_id, record_id_from_id(titles.titles_id) as titles_id_short,
+  TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(titles.ward_fischer, ';', numbers.n), ';', -1)) as ward_fischer
 from
   (select 1 n union 
    select 2 union all select 3 union all select 4 union all SELECT 5 union all SELECT 6 union all SELECT 7 union all SELECT 8 union all SELECT 9 union all SELECT 10 union all SELECT 11 union all SELECT 12 union all SELECT 13 union all SELECT 14 union all SELECT 15 union all SELECT 16 union all SELECT 17 union all SELECT 18 union all SELECT 19 union all SELECT 20 union all SELECT 21 union all SELECT 22) numbers
