@@ -753,7 +753,7 @@ SELECT dating, dating_note, record_id_from_id(workshops_id) as workshops_id_shor
         rr:objectMap [ rr:template "https://pnm.uni-mainz.de/workshop/{workshops_id_short}"];
     ];
 	 rr:predicateObjectMap [
-        rr:predicate crm:P185_ends_before_the_end_of;
+        rr:predicate crm:P184_ends_before_or_with_the_end_of;
         rr:objectMap [
         rr:parentTriplesMap <#thesaurus_map>;
         rr:joinCondition [
@@ -785,7 +785,7 @@ SELECT dating, dating_note, record_id_from_id(workshops_id) as workshops_id_shor
         rr:objectMap [ rr:template "https://pnm.uni-mainz.de/workshop/{workshops_id_short}"];
     ];
 			 rr:predicateObjectMap [
-        rr:predicate crm:P176i_starts_after_the_start_of;
+        rr:predicate crm:P175i_starts_after_or_with_the_start_of;
         rr:objectMap [
         rr:parentTriplesMap <#thesaurus_map>;
         rr:joinCondition [
@@ -795,7 +795,7 @@ SELECT dating, dating_note, record_id_from_id(workshops_id) as workshops_id_shor
            ];
 		   ];
 		   			 rr:predicateObjectMap [
-        rr:predicate crm:P185_ends_before_the_end_of;
+        rr:predicate crm:P184_ends_before_or_with_the_end_of;
         rr:objectMap [
         rr:parentTriplesMap <#thesaurus_map>;
         rr:joinCondition [
@@ -1286,7 +1286,7 @@ FROM spellings WHERE NOT ISNULL(usage_area) OR NOT ISNULL(usage_period)
     ] ;	
 	
 		 rr:predicateObjectMap [
-        rr:predicate crm:P176i_starts_after_the_start_of;
+        rr:predicate crm:P175i_starts_after_or_with_the_start_of;
         rr:objectMap [
         rr:parentTriplesMap <#thesaurus_map>;
         rr:joinCondition [
@@ -1296,7 +1296,7 @@ FROM spellings WHERE NOT ISNULL(usage_area) OR NOT ISNULL(usage_period)
            ];
 		   ];
 		   		 rr:predicateObjectMap [
-        rr:predicate crm:P185_ends_before_the_end_of;
+        rr:predicate crm:P184_ends_before_or_with_the_end_of;
         rr:objectMap [
         rr:parentTriplesMap <#thesaurus_map>;
         rr:joinCondition [
@@ -1416,7 +1416,7 @@ FROM personal_names WHERE NOT ISNULL(usage_area) OR NOT ISNULL(usage_period) OR 
         rr:class pnm:usage;
     ] ;
 		 rr:predicateObjectMap [
-        rr:predicate crm:P176i_starts_after_the_start_of;
+        rr:predicate crm:P175i_starts_after_or_with_the_start_of;
         rr:objectMap [
         rr:parentTriplesMap <#thesaurus_map>;
         rr:joinCondition [
@@ -1426,7 +1426,7 @@ FROM personal_names WHERE NOT ISNULL(usage_area) OR NOT ISNULL(usage_period) OR 
            ];
 		   ];
 		   	 rr:predicateObjectMap [
-        rr:predicate crm:P185_ends_before_the_end_of;
+        rr:predicate crm:P184_ends_before_or_with_the_end_of;
         rr:objectMap [
         rr:parentTriplesMap <#thesaurus_map>;
         rr:joinCondition [
@@ -1672,7 +1672,7 @@ FROM name_types WHERE NOT ISNULL(usage_area) OR NOT ISNULL(usage_period)
     ] ;	
 	
 		 rr:predicateObjectMap [
-        rr:predicate crm:P185_ends_before_the_end_of;
+        rr:predicate crm:P184_ends_before_or_with_the_end_of;
         rr:objectMap [
         rr:parentTriplesMap <#thesaurus_map>;
         rr:joinCondition [
@@ -1682,7 +1682,7 @@ FROM name_types WHERE NOT ISNULL(usage_area) OR NOT ISNULL(usage_period)
            ];
 		   ];
 		   		 rr:predicateObjectMap [
-        rr:predicate crm:P176i_starts_after_the_start_of;
+        rr:predicate crm:P175i_starts_after_or_with_the_start_of;
         rr:objectMap [
         rr:parentTriplesMap <#thesaurus_map>;
         rr:joinCondition [
@@ -1857,7 +1857,7 @@ FROM titles WHERE NOT ISNULL(usage_area) OR NOT ISNULL(usage_period) OR NOT ISNU
         rr:template "https://pnm.uni-mainz.de/title/{titles_id_short}#usage";
         rr:class pnm:usage;
     ];			 rr:predicateObjectMap [
-        rr:predicate crm:P185_ends_before_the_end_of;
+        rr:predicate crm:P184_ends_before_or_with_the_end_of;
         rr:objectMap [
         rr:parentTriplesMap <#thesaurus_map>;
         rr:joinCondition [
@@ -1867,7 +1867,7 @@ FROM titles WHERE NOT ISNULL(usage_area) OR NOT ISNULL(usage_period) OR NOT ISNU
            ];
 		   ];
 		    rr:predicateObjectMap [
-        rr:predicate crm:P176i_starts_after_the_start_of;
+        rr:predicate crm:P175i_starts_after_or_with_the_start_of;
         rr:objectMap [
         rr:parentTriplesMap <#thesaurus_map>;
         rr:joinCondition [
@@ -2193,7 +2193,7 @@ FROM persons WHERE NOT ISNULL(dating) OR NOT ISNULL(region)
     ] ;	
 	
 		 rr:predicateObjectMap [
-        rr:predicate crm:P176i_starts_after_the_start_of;
+        rr:predicate crm:P175i_starts_after_or_with_the_start_of;
         rr:objectMap [
         rr:parentTriplesMap <#thesaurus_map>;
         rr:joinCondition [
@@ -2203,7 +2203,7 @@ FROM persons WHERE NOT ISNULL(dating) OR NOT ISNULL(region)
            ];
 		   ];
 		   		 rr:predicateObjectMap [
-        rr:predicate crm:P185_ends_before_the_end_of;
+        rr:predicate crm:P184_ends_before_or_with_the_end_of;
         rr:objectMap [
         rr:parentTriplesMap <#thesaurus_map>;
         rr:joinCondition [
