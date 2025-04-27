@@ -1,0 +1,2474 @@
+@prefix rr: <http://www.w3.org/ns/r2rml#>.
+@prefix pnm: <https://pnm.uni-mainz.de/ontology#>.
+@prefix geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>.
+@prefix lawd: <http://lawd.info/ontology/>.
+@prefix skos: <http://www.w3.org/2004/02/skos/core#>.
+@prefix crm: <http://www.cidoc-crm.org/cidoc-crm/>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix crmeh: <http://purl.org/crmeh#>.
+@prefix pav: <http://purl.org/pav/2.0/> .
+@prefix ontolex: <http://www.w3.org/ns/lemon/ontolex#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+# thesauri
+<#thesauri_prep> a rr:R2RMLView;
+rr:sqlQuery """
+SELECT *, CAST(date_created AS DATETIME) AS date_created_dt, CAST(date_changed AS DATETIME) AS date_changed_dt, record_id_from_id(thesauri_id) as thesauri_id_short, (SELECT item_name from thesauri as t2 where t2.thesauri_id = thesauri.parent ) as parent_item_name,
+(SELECT item_name from thesauri as t2 where t2.thesauri_id = thesauri.thesaurus ) as thesaurus_item_name,
+(CASE thesaurus
+WHEN 0 THEN 'https://pnm.uni-mainz.de/ontology#thesaurus' 
+WHEN 1 THEN 'http://www.cidoc-crm.org/cidoc-crm/E55_Type'
+WHEN 2 THEN 'http://www.cidoc-crm.org/cidoc-crm/E55_Type'
+WHEN 3 THEN 'http://www.cidoc-crm.org/cidoc-crm/E57_Material'
+WHEN 4 THEN 'https://pnm.uni-mainz.de/ontology#text_content'
+WHEN 5 THEN 'http://www.cidoc-crm.org/cidoc-crm/E4_Period'
+WHEN 6 THEN 'http://www.cidoc-crm.org/cidoc-crm/E4_Period'
+WHEN 7 THEN 'http://www.cidoc-crm.org/cidoc-crm/E55_Type'
+WHEN 8 THEN 'http://www.cidoc-crm.org/cidoc-crm/E55_Type'
+WHEN 9 THEN 'https://pnm.uni-mainz.de/ontology#relative_location'
+WHEN 10 THEN 'http://www.cidoc-crm.org/cidoc-crm/E55_Type'
+WHEN 11 THEN 'https://pnm.uni-mainz.de/ontology#bond_type'
+WHEN 12 THEN 'https://pnm.uni-mainz.de/ontology#script'
+END) as class,
+CASE 
+WHEN thesaurus=0 THEN 'http://www.w3.org/2004/02/skos/core#ConceptScheme'
+ELSE 'http://www.w3.org/2004/02/skos/core#Concept'
+END as skos,
+(CASE thesaurus
+WHEN 1 THEN 'http://www.cidoc-crm.org/cidoc-crm/P127_has_broader_term'
+WHEN 2 THEN 'http://www.cidoc-crm.org/cidoc-crm/P127_has_broader_term'
+WHEN 5 THEN 'http://www.cidoc-crm.org/cidoc-crm/P9i_forms_part_of'
+WHEN 6 THEN 'http://www.cidoc-crm.org/cidoc-crm/P9i_forms_part_of'
+END) as parent_class,
+CASE 
+WHEN external_key LIKE 'thot%' THEN CONCAT('http://thot.philo.ulg.ac.be/concept/', external_key)
+ELSE external_key END as external_key_prep
+FROM thesauri
+""".	
+<#thesaurus_map> a rr:TriplesMap;
+    rr:logicalTable <#thesauri_prep>;
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/thesaurus/{item_name}";
+        ];
+	    rr:predicateObjectMap [
+        rr:predicate rdf:type;
+        rr:objectMap [ rr:column "class" ; rr:termType rr:IRI;]		;
+		        rr:objectMap [ rr:column "skos" ; rr:termType rr:IRI;]		;
+    ];
+	rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate skos:inScheme;
+		rr:objectMap [ rr:template "https://pnm.uni-mainz.de/thesaurus/{thesaurus_item_name}" ];
+		];
+    rr:predicateObjectMap [
+        rr:predicateMap [ rr:column "parent_class" ; rr:termType rr:IRI;];
+        rr:objectMap [ rr:template "https://pnm.uni-mainz.de/thesaurus/{parent_item_name}" ];
+    ];
+	    rr:predicateObjectMap [
+        rr:predicate skos:broader;
+        rr:objectMap [ rr:template "https://pnm.uni-mainz.de/thesaurus/{parent_item_name}" ];
+    ];
+	    rr:predicateObjectMap [
+        rr:predicate skos:prefLabel;
+        rr:objectMap [ rr:column "item_name"; rr:language "en" ];
+    ];
+	    rr:predicateObjectMap [
+        rr:predicate skos:closeMatch;
+        rr:objectMap [ rr:column "external_key_prep"; rr:termType rr:IRI; ];
+    ];
+		    rr:predicateObjectMap [
+        rr:predicate skos:definition;
+        rr:objectMap [ rr:column "explanation" ];
+    ].
+	# coordinates
+<#coord_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT places_id, wgs84_latitude, wgs84_longitude, CAST(date_created AS DATETIME) AS date_created_dt, CAST(date_changed AS DATETIME) AS date_changed_dt, record_id_from_id(places_id) as places_id_short
+FROM places WHERE wgs84_latitude > 0 AND wgs84_longitude > 0
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/place/{places_id_short}#coord";
+        rr:class geo:SpatialThing;
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];
+    ];
+    rr:predicateObjectMap [
+		rr:predicate geo:lat;
+        rr:objectMap [ rr:column "wgs84_latitude"; rr:datatype xsd:decimal ];
+    ];
+	    rr:predicateObjectMap [
+        rr:predicate geo:long;
+        rr:objectMap [ rr:column "wgs84_longitude"; rr:datatype xsd:decimal ];
+    ].
+
+# places
+	
+<#place_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT *, CAST(date_created AS DATETIME) AS date_created_dt, CAST(date_changed AS DATETIME) AS date_changed_dt, record_id_from_id(places_id) as places_id_short
+FROM places
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/place/{places_id_short}";
+        rr:class lawd:Place;
+		rr:class crm:E53_Place;
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];
+    ];
+    rr:predicateObjectMap [
+		rr:predicate skos:prefLabel;
+        rr:objectMap [ rr:column "place_name"; rr:language "en" ];
+    ];
+	    rr:predicateObjectMap [
+        rr:predicate skos:altLabel;
+        rr:objectMap [ rr:column "long_place_name" ];
+    ];
+	rr:predicateObjectMap [
+        rr:predicate skos:exactMatch;
+        rr:objectMap [rr:column "artefacts_url"; rr:termType rr:IRI;];
+    ];
+	rr:predicateObjectMap [
+        rr:predicate skos:exactMatch;
+        rr:objectMap [rr:template "https://www.trismegistos.org/place/{tm_geoid}" ; rr:termType rr:IRI;];
+    ];
+	rr:predicateObjectMap [
+        rr:predicate skos:exactMatch;
+        rr:objectMap [rr:template "http://topbib.griffith.ox.ac.uk//dtb.html?topbib={topbib_id}" ; rr:termType rr:IRI;];
+    ];
+	rr:predicateObjectMap [
+        rr:predicate skos:exactMatch;
+        rr:objectMap [rr:template "http://pleiades.stoa.org/places/{pleiades_id}" ; rr:termType rr:IRI;];
+    ];
+		 rr:predicateObjectMap [
+        rr:predicate crm:P89_falls_within;
+        rr:objectMap [
+        rr:parentTriplesMap <#place_map>;
+        rr:joinCondition [
+            rr:child "macro_region";
+            rr:parent "place_name";
+        ];
+           ];
+		   ];
+		    rr:predicateObjectMap [
+        rr:predicate crm:P89_falls_within;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "relative_location";
+            rr:parent "item_name";
+        ];
+           ];
+		   ];
+		   	#coordinates
+    rr:predicateObjectMap [
+        rr:predicate crm:P168_place_is_defined_by;
+        		rr:objectMap [
+        rr:parentTriplesMap <#coord_map>;
+        rr:joinCondition [
+            rr:child "places_id";
+            rr:parent "places_id";
+        ];
+           ];
+    ].
+
+
+# topbib
+<#topbib_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT objects_id, record_id_from_id(objects_id) as objects_id_short, topbib_id
+FROM objects where NOT ISNULL(topbib_id)
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/object/{objects_id_short}#topbib_id" ;
+        rr:class crm:E42_Identifier;
+    ];
+	 rr:predicateObjectMap [
+        rr:predicate rdfs:label;
+        rr:objectMap [ rr:column "topbib_id" ];
+    ];
+		 rr:predicateObjectMap [
+        rr:predicate crm:P2_has_type;
+        rr:object pnm:topbib_id;
+    ].
+	
+# dating, dating_note
+
+<#object_production_map>  a rr:TriplesMap;
+
+    rr:logicalTable [rr:sqlQuery """
+SELECT record_id_from_id(objects_id) as objects_id_short, production_place, production_place_note
+FROM objects where NOT ISNULL(production_place) OR EXISTS(SELECT objects_id FROM inscriptions_workshops_xref where inscriptions_workshops_xref.objects_id = objects.objects_id)
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/object/{objects_id_short}#production" ;
+        rr:class crm:E12_Production;
+    ];
+	 rr:predicateObjectMap [
+        rr:predicate crm:P108_has_produced;
+        rr:objectMap [ rr:template "https://pnm.uni-mainz.de/object/{objects_id_short}" ];
+    ];
+				 rr:predicateObjectMap [
+        rr:predicate crm:P7_took_place_at;
+        rr:objectMap [
+        rr:parentTriplesMap <#place_map>;
+        rr:joinCondition [
+            rr:child "production_place";
+            rr:parent "place_name";
+        ];
+           ];
+		   ];
+		   	 rr:predicateObjectMap [
+        rr:predicate pnm:has_production_place_note;
+        rr:objectMap [  rr:column "production_place_note" ];
+    ].
+	
+<#inscription_length_map>  a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT record_id_from_id(objects_id) as objects_id_short, length as dimension
+FROM objects where NOT ISNULL(length) AND length > 0
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/object/{objects_id_short}#length" ;
+        rr:class crm:E54_Dimension;
+    ];
+	 rr:predicateObjectMap [
+        rr:predicate crm:P43i_is_dimension_of;
+        rr:objectMap [ rr:template "https://pnm.uni-mainz.de/object/{objects_id_short}" ];
+    ];
+		 rr:predicateObjectMap [
+        rr:predicate crm:P91_has_unit;
+        rr:object <http://qudt.org/2.1/vocab/unit#MilliM>];
+				 rr:predicateObjectMap [
+        rr:predicate crm:P90_has_value;
+        rr:objectMap [rr:column "dimension"];
+    ].
+	<#inscription_height_map>  a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT record_id_from_id(objects_id) as objects_id_short, height as dimension
+FROM objects where NOT ISNULL(height) AND height > 0
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/object/{objects_id_short}#height" ;
+        rr:class crm:E54_Dimension;
+    ];
+	 rr:predicateObjectMap [
+        rr:predicate crm:P43i_is_dimension_of;
+        rr:objectMap [ rr:template "https://pnm.uni-mainz.de/object/{objects_id_short}" ];
+    ];
+		 rr:predicateObjectMap [
+        rr:predicate crm:P91_has_unit;
+        rr:object <http://qudt.org/2.1/vocab/unit#MilliM>];
+				 rr:predicateObjectMap [
+        rr:predicate crm:P90_has_value;
+        rr:objectMap [rr:column "dimension"];
+    ].
+	<#inscription_width_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT record_id_from_id(objects_id) as objects_id_short, width as dimension
+FROM objects where NOT ISNULL(width) AND width > 0
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/object/{objects_id_short}#width" ;
+        rr:class crm:E54_Dimension;
+    ];
+	 rr:predicateObjectMap [
+        rr:predicate crm:P43i_is_dimension_of;
+        rr:objectMap [ rr:template "https://pnm.uni-mainz.de/object/{objects_id_short}" ];
+    ];
+		 rr:predicateObjectMap [
+        rr:predicate crm:P91_has_unit;
+        rr:object <http://qudt.org/2.1/vocab/unit#MilliM>];
+				 rr:predicateObjectMap [
+        rr:predicate crm:P90_has_value;
+        rr:objectMap [rr:column "dimension"];
+    ].
+	<#inscription_thickness_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT record_id_from_id(objects_id) as objects_id_short, thickness as dimension
+FROM objects where NOT ISNULL(thickness) AND thickness > 0
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/object/{objects_id_short}#thickness" ;
+        rr:class crm:E54_Dimension;
+    ];
+	 rr:predicateObjectMap [
+        rr:predicate crm:P43i_is_dimension_of;
+        rr:objectMap [ rr:template "https://pnm.uni-mainz.de/object/{objects_id_short}" ];
+    ];
+		 rr:predicateObjectMap [
+        rr:predicate crm:P91_has_unit;
+        rr:object <http://qudt.org/2.1/vocab/unit#MilliM>];
+				 rr:predicateObjectMap [
+        rr:predicate crm:P90_has_value;
+        rr:objectMap [rr:column "dimension"];
+    ].
+
+<#objects_prep> a rr:R2RMLView;
+rr:sqlQuery """
+SELECT *, CAST(date_created AS DATETIME) AS date_created_dt, CAST(date_changed AS DATETIME) AS date_changed_dt, record_id_from_id(objects_id) as objects_id_short, record_id_from_id(find_groups_id) as find_groups_id_short
+FROM objects
+""".	
+## objects
+## formerly, #inscriptions_physical_map
+<#objects_map> a rr:TriplesMap;
+    rr:logicalTable <#objects_prep>;
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/object/{objects_id_short}";
+        rr:class crm:E24_Physical_Human-Made_Thing;
+    ];
+
+ 		rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];
+    ];
+               rr:predicateObjectMap [
+        rr:predicate skos:prefLabel;
+        rr:objectMap [ rr:column "title" ];
+    ];
+	#topbib_id
+    rr:predicateObjectMap [
+        rr:predicate crm:P1_is_identified_by;
+        		rr:objectMap [
+        rr:parentTriplesMap <#topbib_map>;
+        rr:joinCondition [
+            rr:child "objects_id";
+            rr:parent "objects_id";
+        ];
+           ];
+    ];
+		 
+		   #material
+	    rr:predicateObjectMap [
+        rr:predicate crm:P45_consists_of;
+		        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "material";
+            rr:parent "item_name";
+        ];
+           ];
+		   ];
+#object_type		   
+  	    rr:predicateObjectMap [
+        rr:predicate crm:P2_has_type;
+		        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "object_type";
+            rr:parent "item_name";
+        ];
+           ];
+		   ];
+		   	    rr:predicateObjectMap [
+        rr:predicate crm:P2_has_type;
+		        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "object_subtype";
+            rr:parent "item_name";
+        ];
+           ];
+    ];	   
+	rr:predicateObjectMap [
+        rr:predicate lawd:foundAt, crm:P53_has_former_or_current_location;
+        rr:objectMap [
+        rr:parentTriplesMap <#place_map>;
+        rr:joinCondition [
+            rr:child "provenance";
+            rr:parent "place_name";
+        ];
+           ];
+		   ];
+		   		rr:predicateObjectMap [
+        rr:predicate pnm:has_provenance_note;
+        rr:objectMap [ rr:column "provenance_note" ];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate pnm:installation_place;
+        rr:objectMap [
+        rr:parentTriplesMap <#place_map>;
+        rr:joinCondition [
+            rr:child "installation_place";
+            rr:parent "place_name";
+        ];
+           ];
+		   ];
+		   rr:predicateObjectMap [
+        rr:predicate pnm:has_installation_place_note;
+        rr:objectMap [ rr:column "installation_place_note" ];
+    ];
+		    rr:predicateObjectMap [
+        rr:predicate crm:P53_has_former_or_current_location;
+        rr:objectMap [
+        rr:parentTriplesMap <#find_group_map>;
+        rr:joinCondition [
+            rr:child "find_groups_id";
+            rr:parent "find_groups_id";
+        ];
+           ];
+    ].
+
+<#objects_inscriptions_xref_prep> a rr:R2RMLView;
+rr:sqlQuery """
+SELECT inscriptions_id, CAST(date_created AS DATETIME) AS date_created_dt, CAST(date_changed AS DATETIME) AS date_changed_dt, record_id_from_id(inscriptions_id) as inscriptions_id_short, record_id_from_id(objects_id) as objects_id_short
+FROM objects_inscriptions_xref
+""".
+
+<#objects_inscriptions_xref_masp> a rr:TriplesMap;
+    rr:logicalTable <#objects_inscriptions_xref_prep>;
+#    rr:subjectMap [
+#      rr:objectMap [
+#        rr:parentTriplesMap <#objects_map>;
+#		rr:joinCondition [
+#            rr:child "objects_id_short";
+#            rr:parent "objects_id_short";
+#        ];
+#		];
+#    ];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/object/{objects_id_short}";
+        
+    ];
+	    rr:predicateObjectMap [
+        rr:predicate crm:P128_carries;
+		  
+		rr:objectMap [
+        rr:parentTriplesMap <#inscriptions_map>;
+		rr:joinCondition [
+            rr:child "inscriptions_id";
+            rr:parent "inscriptions_id";
+        ];
+		];
+		];
+ 		.
+		
+# dating, dating_note
+
+<#inscription_creation_map>  a rr:TriplesMap;
+
+    rr:logicalTable [rr:sqlQuery """
+SELECT inscriptions_id, record_id_from_id(inscriptions_id) as inscriptions_id_short, dating, dating_note
+FROM inscriptions where NOT ISNULL(dating) 
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/inscription/{inscriptions_id_short}#creation" ;
+        rr:class crm:E65_Creation ;
+    ];
+	 rr:predicateObjectMap [
+        rr:predicate crm:P94_has_created;
+                rr:objectMap [
+        rr:parentTriplesMap <#inscriptions_map>;
+        rr:joinCondition [
+            rr:child "inscriptions_id";
+            rr:parent "inscriptions_id";
+        ];
+           ];
+    ];
+				  rr:predicateObjectMap [
+        rr:predicate crm:P175i_starts_after_or_with_the_start_of;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "dating";
+            rr:parent "item_name";
+        ];
+           ];
+		   ];
+		   				  rr:predicateObjectMap [
+        rr:predicate crm:P184_ends_before_or_with_the_end_of;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "dating";
+            rr:parent "item_name";
+        ];
+           ];
+		   ];
+		   	 rr:predicateObjectMap [
+        rr:predicate pnm:has_dating_note;
+        rr:objectMap [ rr:column "dating_note" ];
+    ];.		
+	
+<#inscriptions_prep> a rr:R2RMLView;
+rr:sqlQuery """
+SELECT *, CAST(date_created AS DATETIME) AS date_created_dt, CAST(date_changed AS DATETIME) AS date_changed_dt, record_id_from_id(inscriptions_id) as inscriptions_id_short
+FROM inscriptions
+""".
+
+	
+## inscriptions
+<#inscriptions_map> a rr:TriplesMap;
+    rr:logicalTable <#inscriptions_prep>;
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/inscription/{inscriptions_id_short}";
+        rr:class crm:E34_Inscription;
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];
+    ];
+#title
+    rr:predicateObjectMap [
+        rr:predicate skos:prefLabel;
+        rr:objectMap [ rr:column "title" ];
+    ];
+
+#tmtexts_id
+		rr:predicateObjectMap [
+        rr:predicate skos:closeMatch;
+        rr:objectMap [rr:template "https://www.trismegistos.org/text/{tmtexts_id}" ; rr:termType rr:IRI;];
+    ];
+	
+#    rr:predicateObjectMap [
+#        rr:predicate crm:P1_is_identified_by;
+#		rr:objectMap [
+#        rr:parentTriplesMap <#tmtexts_map>;
+#        rr:joinCondition [
+#            rr:child "inscriptions_id_short";
+#            rr:parent "inscriptions_id_short";
+#        ];
+#           ];
+#		   ];
+
+  rr:predicateObjectMap [
+        rr:predicate pnm:has_text_content;
+		        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "text_content";
+            rr:parent "item_name";
+        ];
+           ];
+    ];	
+  rr:predicateObjectMap [
+        rr:predicate pnm:has_script;
+		        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "script";
+            rr:parent "item_name";
+        ];
+           ];
+    ];
+	rr:predicateObjectMap [
+        rr:predicate pnm:origin;
+        rr:objectMap [
+        rr:parentTriplesMap <#place_map>;
+        rr:joinCondition [
+            rr:child "origin";
+            rr:parent "place_name";
+        ];
+           ];
+		   ];
+		   rr:predicateObjectMap [
+        rr:predicate pnm:has_origin_note;
+        rr:objectMap [ rr:column "origin_note" ];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate pnm:last_king_mentioned;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "last_king_id";
+            rr:parent "thesauri_id";
+        ];
+           ];
+		   ].
+	#
+# find_groups
+<#find_groups_production_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT record_id_from_id(find_groups_id) as find_groups_id_short,  dating, dating_note
+FROM find_groups where  NOT ISNULL(dating)
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/group/{find_groups_id_short}#production" ;
+        rr:class crm:E12_Production;
+    ];
+	 rr:predicateObjectMap [
+        rr:predicate pnm:has_deposited;
+        rr:objectMap [ rr:template "https://pnm.uni-mainz.de/group/{find_groups_id_short}" ];
+    ];	
+	rr:predicateObjectMap [
+        rr:predicate crm:P175i_starts_after_or_with_the_start_of;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "dating";
+            rr:parent "item_name";
+        ];
+           ];
+		   ];
+		 rr:predicateObjectMap [
+        rr:predicate crm:P184_ends_before_or_with_the_end_of;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "dating";
+            rr:parent "item_name";
+        ];
+           ];
+		   ];
+		   	 rr:predicateObjectMap [
+        rr:predicate pnm:has_dating_note;
+        rr:objectMap [ rr:column "dating_note" ];
+    ].
+
+<#find_group_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT *, CAST(date_created AS DATETIME) AS date_created_dt, CAST(date_changed AS DATETIME) AS date_changed_dt, record_id_from_id(find_groups_id) as find_groups_id_short
+FROM find_groups
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/group/{find_groups_id_short}";
+        rr:class crmeh:EHE0007_Context;
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];
+    ];
+    rr:predicateObjectMap [
+        rr:predicate crm:P89_falls_within;
+		    rr:objectMap [
+        rr:parentTriplesMap <#place_map>;
+        rr:joinCondition [
+            rr:child "site";
+            rr:parent "place_name";
+        ];
+           ];
+		   ];
+    rr:predicateObjectMap [
+        rr:predicate crm:P89_falls_within;
+        rr:objectMap [ rr:column "site_area" ];
+    ];
+	    rr:predicateObjectMap [
+        rr:predicate pnm:has_exact_location;
+        rr:objectMap [ rr:column "exact_location" ];
+    ];
+	   rr:predicateObjectMap [
+        rr:predicate skos:prefLabel;
+        rr:objectMap [ rr:column "title" ];
+    ];
+		   rr:predicateObjectMap [
+        rr:predicate crm:P2_has_type;
+		rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "find_group_type";
+            rr:parent "item_name";
+        ];
+           ];
+];
+			   rr:predicateObjectMap [
+        rr:predicate pnm:architecture;
+        rr:objectMap [ rr:column "architecture" ];
+    ];
+					   rr:predicateObjectMap [
+        rr:predicate pnm:human_remains;
+        rr:objectMap [ rr:column "human_remains" ];
+    ];
+				   rr:predicateObjectMap [
+        rr:predicate pnm:finds;
+        rr:objectMap [ rr:column "finds" ];
+    ];
+ rr:predicateObjectMap [
+        rr:predicate pnm:P2_has_type;
+       		rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "disturbance";
+            rr:parent "item_name";
+        ];
+           ];
+    ];
+	 rr:predicateObjectMap [
+        rr:predicate crm:P3_has_note;
+        rr:objectMap [ rr:column "note" ];	
+    ].
+	#workshops	
+	<#inscription_workshops_production_map>  a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT *,record_id_from_id(objects_id) as objects_id_short, record_id_from_id(workshops_id) as workshops_id_short,
+IF (note>'', CONCAT('. Note: ', note), note) as note_prep from inscriptions_workshops_xref 
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/object/{objects_id_short}#production" ;
+        ];
+		rr:predicateObjectMap [
+        rr:predicate crm:P14_carried_out_by;
+        rr:objectMap [
+        rr:parentTriplesMap <#workshop_map>;
+        rr:joinCondition [
+            rr:child "workshops_id";
+            rr:parent "workshops_id";
+        ];
+           ];
+		   ];
+		   	 rr:predicateObjectMap [
+        rr:predicate crm:P3_has_note;
+        rr:objectMap [ rr:template "Production by <https://pnm.uni-mainz.de/workshop/{workshops_id_short}>. Status: {status}{note_prep}"; rr:termType rr:Literal; ];
+    ].
+	<#workshop_dissolution_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT dating, dating_note, record_id_from_id(workshops_id) as workshops_id_short FROM workshops where not isnull(dating)
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/workshop/{workshops_id_short}#Dissolution";
+        rr:class crm:E68_Dissolution;
+    ];
+			rr:predicateObjectMap [
+        rr:predicate crm:P99_dissolved;
+        rr:objectMap [ rr:template "https://pnm.uni-mainz.de/workshop/{workshops_id_short}"];
+    ];
+	 rr:predicateObjectMap [
+        rr:predicate crm:P185_ends_before_the_end_of;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "dating";
+            rr:parent "item_name";
+        ];
+           ];
+		   ];
+			 rr:predicateObjectMap [
+        rr:predicate crm:P175i_starts_after_or_with_the_start_of;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "dating";
+            rr:parent "item_name";
+        ];
+           ];
+		   ].
+<#workshop_formation_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT dating, dating_note, record_id_from_id(workshops_id) as workshops_id_short FROM workshops where not isnull(dating)
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/workshop/{workshops_id_short}#Formation";
+        rr:class crm:E66_Formation;
+    ];
+			rr:predicateObjectMap [
+        rr:predicate crm:P95_has_formed;
+        rr:objectMap [ rr:template "https://pnm.uni-mainz.de/workshop/{workshops_id_short}"];
+    ];
+			 rr:predicateObjectMap [
+        rr:predicate crm:P176i_starts_after_the_start_of;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "dating";
+            rr:parent "item_name";
+        ];
+           ];
+		   ];
+		   			 rr:predicateObjectMap [
+        rr:predicate crm:P185_ends_before_the_end_of;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "dating";
+            rr:parent "item_name";
+        ];
+           ];
+		   ];
+		    rr:predicateObjectMap [
+        rr:predicate pnm:has_dating_note;
+        rr:objectMap [ rr:column "dating_note" ];
+    ].
+#workshops	 
+<#workshop_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT title, workshops_id, production_place, production_place_note, note, CAST(date_created AS DATETIME) AS date_created_dt, CAST(date_changed AS DATETIME) AS date_changed_dt, record_id_from_id(workshops_id) as workshops_id_short
+FROM workshops
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/workshop/{workshops_id_short}";
+        rr:class crm:E74_Group;
+    ];
+		rr:predicateObjectMap [
+        rr:predicate skos:prefLabel;
+        rr:objectMap [ rr:column "title" ];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];
+    ];
+    rr:predicateObjectMap [
+        rr:predicate crm:P74_has_current_or_former_residence;
+		    rr:objectMap [
+        rr:parentTriplesMap <#place_map>;
+        rr:joinCondition [
+            rr:child "production_place";
+            rr:parent "place_name";
+        ];
+           ];
+		   ];	
+		   		rr:predicateObjectMap [
+        rr:predicate pnm:has_location_note;
+        rr:objectMap [ rr:column "production_place_note" ];
+    ];
+	rr:predicateObjectMap [
+        rr:predicate crm:P3_has_note;
+        rr:objectMap [ rr:column "note" ];
+    ].
+<#publications_map> a rr:TriplesMap;
+rr:logicalTable [rr:sqlQuery """
+SELECT *, CAST(date_created AS DATETIME) AS date_created_dt, CAST(date_changed AS DATETIME) AS date_changed_dt, record_id_from_id(publications_id) as publications_id_short
+FROM publications
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/publication/{publications_id_short}";
+        rr:class crm:E31_document, dcterms:BibliographicResource;
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];
+    ];
+    rr:predicateObjectMap [
+        rr:predicate pnm:csl_json;
+        rr:objectMap [ rr:column "csl_json" ];
+    ];
+	    rr:predicateObjectMap [
+        rr:predicate dcterms:bibliographicCitation;
+        rr:objectMap [ rr:column "html_entry" ];
+    ];
+		    rr:predicateObjectMap [
+        rr:predicate skos:closeMatch;
+        rr:objectMap [ rr:template "http://oeb.griffith.ox.ac.uk/oeb_entry.aspx?item={oeb_id}"; rr:termType rr:IRI; ];
+    ];
+	    rr:predicateObjectMap [
+        rr:predicate skos:prefLabel;
+        rr:objectMap [ rr:column "author_year" ];
+    ].
+##inv_nos
+<#inv_no_assignment_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT *, record_id_from_id(inv_nos_id) as inv_nos_id_short, record_id_from_id(collections_id) as collections_id_short, record_id_from_id(objects_id) as objects_id_short
+FROM inv_nos
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/object/{objects_id_short}#inv_no_{inv_nos_id_short}_assignment";
+        rr:class crm:E15_Identifier_Assignment;
+    ];
+	rr:predicateObjectMap [
+        rr:predicate crm:P37_assigned;
+		    rr:objectMap [
+        rr:parentTriplesMap <#inv_no_map>;
+        rr:joinCondition [
+            rr:child "inv_nos_id";
+            rr:parent "inv_nos_id";
+        ];
+           ];
+		   ];
+		   	rr:predicateObjectMap [
+        rr:predicate crm:P14_carried_out_by;
+		    rr:objectMap [
+        rr:parentTriplesMap <#collection_map>;
+        rr:joinCondition [
+            rr:child "collections_id";
+            rr:parent "collections_id";
+        ];
+           ];
+		   ].
+		   
+<#inv_no_owner_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT distinct collections_id , record_id_from_id(objects_id) as objects_id_short,
+(CASE status
+WHEN 'main' THEN 'http://www.cidoc-crm.org/cidoc-crm/P52_has_current_owner'
+WHEN 'alternative' THEN 'http://www.cidoc-crm.org/cidoc-crm/P52_has_current_owner'
+WHEN 'obsolete' THEN 'http://www.cidoc-crm.org/cidoc-crm/P51_has_former_or_current_owner'
+WHEN 'erroneous' THEN 'http://www.cidoc-crm.org/cidoc-crm/P51_has_former_or_current_owner'
+END) as status_class
+FROM inv_nos
+""";];
+    rr:subjectMap [
+         rr:template "https://pnm.uni-mainz.de/object/{objects_id_short}";
+    ];
+		    rr:predicateObjectMap [
+        rr:predicateMap [ rr:column "status_class" ; rr:termType rr:IRI;];
+		
+				    rr:objectMap [
+        rr:parentTriplesMap <#collection_map>;
+        rr:joinCondition [
+            rr:child "collections_id";
+            rr:parent "collections_id";
+        ];
+           ];
+		   ].
+
+<#inv_no_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT *, CAST(date_created AS DATETIME) AS date_created_dt, CAST(date_changed AS DATETIME) AS date_changed_dt, record_id_from_id(inv_nos_id) as inv_nos_id_short, record_id_from_id(objects_id) as objects_id_short,
+(CASE status
+WHEN 'main' THEN 'http://www.cidoc-crm.org/cidoc-crm/P48i_is_preferred_identifier_of'
+WHEN 'alternative' THEN 'http://www.cidoc-crm.org/cidoc-crm/P1i_identifies'
+WHEN 'obsolete' THEN 'http://www.cidoc-crm.org/cidoc-crm/P1i_identifies'
+WHEN 'erroneous' THEN 'http://www.cidoc-crm.org/cidoc-crm/P1i_identifies'
+END) as status_class,
+(CASE status
+WHEN 'main' THEN 'https://pnm.uni-mainz.de/ontology#main_inv_no'
+WHEN 'alternative' THEN 'https://pnm.uni-mainz.de/ontology#alternative_inv_no'
+WHEN 'obsolete' THEN 'https://pnm.uni-mainz.de/ontology#obsolete_inv_no'
+WHEN 'erroneous' THEN 'https://pnm.uni-mainz.de/ontology#erroneous_inv_no'
+END) as status_iri
+FROM inv_nos
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/object/{objects_id_short}#inv_no_{inv_nos_id_short}";
+        rr:class crm:E42_Identifier;
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];
+    ];
+	    rr:predicateObjectMap [
+        rr:predicateMap [ rr:column "status_class" ; rr:termType rr:IRI;];
+		
+				    rr:objectMap [
+        rr:parentTriplesMap <#objects_map>;
+        rr:joinCondition [
+            rr:child "objects_id";
+            rr:parent "objects_id";
+        ];
+           ];
+		   ];
+       # rr:objectMap [ rr:template "https://pnm.uni-mainz.de/inscription/{inscriptions_id_short}" ];
+    
+			rr:predicateObjectMap [
+        rr:predicate crm:P2_has_type;
+        rr:objectMap [ rr:column "status_iri"; rr:termType rr:IRI; ];
+    ];
+				rr:predicateObjectMap [
+        rr:predicate rdfs:label;
+        rr:objectMap [ rr:column "inv_no" ];
+    ];
+	rr:predicateObjectMap [
+        rr:predicate crm:P3_has_note;
+        rr:objectMap [ rr:column "note" ];
+
+    ].
+<#collection_url_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT url, record_id_from_id(collections_id) as collections_id_short
+FROM collections WHERE NOT ISNULL (url)
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/collection/{collections_id_short}#url";
+        rr:class crm:E42_Identifier;
+    ];	
+	rr:predicateObjectMap [
+        rr:predicate rdfs:label, crm:P1_is_identified_by;
+        rr:objectMap [ rr:column "url" ];
+    ].
+<#collection_online_collection_url_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT online_collection, record_id_from_id(collections_id) as collections_id_short
+FROM collections WHERE NOT ISNULL (url)
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/collection/{collections_id_short}#online_collection";
+        rr:class crm:E42_Identifier;
+    ];	
+	rr:predicateObjectMap [
+        rr:predicate rdfs:label, crm:P1_is_identified_by;
+        rr:objectMap [ rr:column "online_collection" ];
+    ];
+	rr:predicateObjectMap [
+        rr:predicate crm:P2_has_type;
+        rr:object pnm:online_collection;
+    ].
+
+<#collection_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT *, CAST(date_created AS DATETIME) AS date_created_dt, CAST(date_changed AS DATETIME) AS date_changed_dt, record_id_from_id(collections_id) as collections_id_short
+FROM collections
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/collection/{collections_id_short}";
+        rr:class crm:E74_Group;
+    ];	
+			rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];
+    ];
+	rr:predicateObjectMap [
+        rr:predicate skos:altLabel;
+        rr:objectMap [ rr:column "full_name_en"; rr:language "en"; ];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate skos:altLabel;
+        rr:objectMap [ rr:column "full_name_national_language"];
+    ];
+			rr:predicateObjectMap [
+        rr:predicate skos:prefLabel;
+        rr:objectMap [ rr:column "title"];
+    ];
+				rr:predicateObjectMap [
+        rr:predicate crm:P74_has_current_or_former_residence;
+        rr:objectMap [ rr:column "location"];
+    ];
+	rr:predicateObjectMap [
+        rr:predicate skos:closeMatch;
+        rr:objectMap [rr:template "http://thot.philo.ulg.ac.be/concept/{thot_concept_id}"; rr:termType rr:IRI; ];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate skos:closeMatch;
+        rr:objectMap [rr:template "https://www.trismegistos.org/collection/{tm_coll_id}" ; rr:termType rr:IRI;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate skos:closeMatch;
+        rr:objectMap [rr:column "artefacts_url"; rr:termType rr:IRI;];
+    ].
+#Attestations	
+	<#attestation_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT *, 
+(CASE WHEN (representation = 'human figure') THEN 'https://pnm.uni-mainz.de/ontology#human_figure' WHEN (representation = 'not represented') THEN 'https://pnm.uni-mainz.de/ontology#not_represented' ELSE NULL END)   as visual_representation,
+CAST(date_created AS DATETIME) AS date_created_dt, CAST(date_changed AS DATETIME) AS date_changed_dt, record_id_from_id(attestations_id) as attestations_id_short, record_id_from_id(inscriptions_id) as inscriptions_id_short
+FROM attestations
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/inscription/{inscriptions_id_short}#{attestations_id_short}";
+        rr:class pnm:person_attestation;
+    ];	
+		rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];
+    ];
+	rr:predicateObjectMap [
+        rr:predicate crm:P67i_is_referred_to_by;
+		    rr:objectMap [
+        rr:parentTriplesMap <#inscriptions_map>;
+        rr:joinCondition [
+            rr:child "inscriptions_id";
+            rr:parent "inscriptions_id";
+        ];
+           ];
+		   ];
+		   		rr:predicateObjectMap [
+        rr:predicate pnm:attested_gender;
+        rr:objectMap [ rr:column "gender" ];
+    ];
+			   		rr:predicateObjectMap [
+        rr:predicate pnm:has_visual_representation;
+        rr:objectMap [ rr:column "visual_representation"; rr:termType rr:IRI; ];
+		
+    ];
+	rr:predicateObjectMap [
+        rr:predicate pnm:epithet;
+        rr:objectMap [ rr:column "epithet" ];
+    ];
+rr:predicateObjectMap [
+        rr:predicate pnm:attested_title_string;
+        rr:objectMap [ rr:column "title_string" ];
+    ];
+	rr:predicateObjectMap [
+        rr:predicate pnm:attested_personal_names;
+        rr:objectMap [ rr:column "personal_name" ];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate pnm:status_in_the_inscription;
+        rr:objectMap [ rr:column "status" ];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate pnm:location_in_the_inscription;
+        rr:objectMap [ rr:column "location" ];
+    ];
+	rr:predicateObjectMap [
+        rr:predicate pnm:has_identity_statement;
+        rr:objectMap [
+        rr:parentTriplesMap <#identity_statements_map>;
+        rr:joinCondition [
+            rr:child "attestations_id";
+            rr:parent "attestations_id";
+        ];
+           ];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate crm:P3_has_note;
+        rr:objectMap [ rr:column "note" ];
+    ].
+
+#identity_statements	
+	<#identity_statements_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT attestations.attestations_id as attestations_id, persons_id, record_id_from_id(persons_attestations_xref.persons_id) as persons_id_short, persons_attestations_xref.reasoning as reasoning, persons_attestations_xref.note as note, CAST(persons_attestations_xref.date_created AS DATETIME) AS date_created_dt, CAST(persons_attestations_xref.date_changed AS DATETIME) AS date_changed_dt, record_id_from_id(persons_attestations_xref.attestations_id) as attestations_id_short,  record_id_from_id(attestations.inscriptions_id) as inscriptions_id_short, record_id_from_id(persons_attestations_xref_id) as persons_attestations_xref_id_id_short,
+(CASE persons_attestations_xref.status
+WHEN 'accepted' THEN 'https://pnm.uni-mainz.de/ontology#identification_accepted'
+WHEN 'weak' THEN 'https://pnm.uni-mainz.de/ontology#identification_is_weak'
+WHEN 'rejected' THEN 'https://pnm.uni-mainz.de/ontology#identification_rejected'
+END) as status_iri
+
+FROM persons_attestations_xref LEFT JOIN attestations on persons_attestations_xref.attestations_id = attestations.attestations_id
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/inscription/{inscriptions_id_short}#{attestations_id_short}_identity_statement_{persons_attestations_xref_id_id_short}";
+        rr:class pnm:identity_statement;
+    ];	
+		rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];
+    ];
+			rr:predicateObjectMap [
+        rr:predicate pnm:refers_to;
+        rr:objectMap [
+        rr:parentTriplesMap <#person_map>;
+        rr:joinCondition [
+            rr:child "persons_id";
+            rr:parent "persons_id";
+        ];
+           ];
+    ];
+			rr:predicateObjectMap [
+        rr:predicate pnm:has_reasoning;
+        rr:objectMap [ rr:column "reasoning"];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate crm:P2_has_type;
+        rr:objectMap [ rr:column "status_iri"; rr:termType rr:IRI;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate crm:P3_has_note;
+        rr:objectMap [ rr:column "note" ];
+    ].
+	#spellings_attestations_xref
+	<#spellings_attestations_xref_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT spellings_attestations_xref.spellings_id as spellings_id, record_id_from_id(spellings_attestations_xref.spellings_id) as spellings_id_short, record_id_from_id(spellings_attestations_xref.attestations_id) as attestations_id_short, record_id_from_id(attestations.inscriptions_id) as inscriptions_id_short
+FROM spellings_attestations_xref left join attestations on (spellings_attestations_xref.attestations_id = attestations.attestations_id)
+""";];
+    rr:subjectMap [
+         rr:template "https://pnm.uni-mainz.de/inscription/{inscriptions_id_short}#{attestations_id_short}";
+           ];
+    rr:predicateObjectMap [
+        rr:predicate pnm:has_spelled_personal_name;
+        		rr:objectMap [
+        rr:parentTriplesMap <#spelling_map>;
+        rr:joinCondition [
+            rr:child "spellings_id";
+            rr:parent "spellings_id";
+        ];
+           ];
+    ].
+		#titles_att
+	<#titles_att_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT titles_att.titles_id as titles_id, record_id_from_id(titles_att.titles_id) as titles_id_short, record_id_from_id(titles_att.attestations_id) as attestations_id_short, record_id_from_id(attestations.inscriptions_id) as inscriptions_id_short
+FROM titles_att left join attestations on (titles_att.attestations_id = attestations.attestations_id)
+""";];
+    rr:subjectMap [
+         rr:template "https://pnm.uni-mainz.de/inscription/{inscriptions_id_short}#{attestations_id_short}";
+           ];	
+
+    rr:predicateObjectMap [
+        rr:predicate pnm:has_title;
+        		rr:objectMap [
+        rr:parentTriplesMap <#title_map>;
+        rr:joinCondition [
+            rr:child "titles_id";
+            rr:parent "titles_id";
+        ];
+           ];
+    ].
+#titles_relations
+	<#titles_relations_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT subject_id, predicate, object_id, record_id_from_id(subject_id) as subject_id_short,
+(CASE predicate
+WHEN 'specificates' THEN 'https://pnm.uni-mainz.de/ontology#specificates'
+WHEN 'refers to' THEN 'https://pnm.uni-mainz.de/ontology#refers_to_title'
+WHEN 'is a variant of' THEN 'https://pnm.uni-mainz.de/ontology#is_a_variant_of'
+WHEN 'is the opposite gender form of' THEN 'https://pnm.uni-mainz.de/ontology#is_the_opposite_gender_form_of'
+END) as predicate_iri
+FROM title_relations
+""";];
+    rr:subjectMap [
+         rr:template "https://pnm.uni-mainz.de/title/{subject_id_short}";
+           ];	
+
+    rr:predicateObjectMap [
+        rr:predicateMap [ rr:column "predicate_iri" ; rr:termType rr:IRI;];;
+        		rr:objectMap [
+        rr:parentTriplesMap <#title_map>;
+        rr:joinCondition [
+            rr:child "object_id";
+            rr:parent "titles_id";
+        ];
+           ];
+    ].
+	
+	
+	# ranke_spelling
+<#ranke_spelling_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT spellings_id, ranke,  record_id_from_id(spellings_id) as spellings_id_short, record_id_from_id(personal_names_id) as personal_names_id_short
+FROM spellings WHERE NOT ISNULL(ranke)
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/name/{personal_names_id_short}#{spellings_id_short}_ranke" ;
+        rr:class crm:E42_Identifier;
+    ];
+	 rr:predicateObjectMap [
+        rr:predicate rdfs:label;
+        rr:objectMap [ rr:column "ranke" ];
+    ];
+		 rr:predicateObjectMap [
+        rr:predicate crm:P2_has_type;
+        rr:object pnm:ranke;
+    ].
+		# spelling usage
+<#spelling_usage_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT spellings_id, usage_area, usage_area_note, usage_period, usage_period_note, record_id_from_id(spellings_id) as spellings_id_short, record_id_from_id(personal_names_id) as personal_names_id_short
+FROM spellings WHERE NOT ISNULL(usage_area) OR NOT ISNULL(usage_period)
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/name/{personal_names_id_short}#{spellings_id_short}_usage" ;
+        rr:class pnm:usage;
+    ] ;	
+	
+		 rr:predicateObjectMap [
+        rr:predicate crm:P176i_starts_after_the_start_of;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "usage_period";
+            rr:parent "item_name";
+        ];
+           ];
+		   ];
+		   		 rr:predicateObjectMap [
+        rr:predicate crm:P185_ends_before_the_end_of;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "usage_period";
+            rr:parent "item_name";
+        ];
+           ];
+		   ];
+		   
+			 rr:predicateObjectMap [
+        rr:predicate crm:P7_took_place_at;
+        rr:objectMap [
+        rr:parentTriplesMap <#place_map>;
+        rr:joinCondition [
+            rr:child "usage_area";
+            rr:parent "place_name";
+        ];
+           ];
+		   ];
+			rr:predicateObjectMap [
+        rr:predicate pnm:has_usage_period_note;
+        rr:objectMap [ rr:column "usage_period_note" ];
+		    ];
+				rr:predicateObjectMap [
+        rr:predicate pnm:has_usage_area_note;
+        rr:objectMap [ rr:column "usage_area_note" ];
+
+    ].
+	# personal_name_form
+<#personal_name_form_spelling_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT ranke, record_id_from_id(spellings_id) as spellings_id_short, record_id_from_id(personal_names_id) as personal_names_id_short
+FROM spellings
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/name/{personal_names_id_short}#form" ;
+    ];
+	 rr:predicateObjectMap [
+        rr:predicate pnm:has_spelling;
+        rr:objectMap [ rr:template "https://pnm.uni-mainz.de/name/{personal_names_id_short}#{spellings_id_short}"; rr:termType rr:IRI; ];
+    ].	
+#Spellings	
+	<#spelling_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT *, CAST(date_created AS DATETIME) AS date_created_dt, CAST(date_changed AS DATETIME) AS date_changed_dt, record_id_from_id(spellings_id) as spellings_id_short, record_id_from_id(personal_names_id) as personal_names_id_short
+FROM spellings
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/name/{personal_names_id_short}#{spellings_id_short}";
+        rr:class pnm:spelling;
+    ];	
+			rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate rdfs:label;
+        rr:objectMap [ rr:column "spelling" ];
+    ];
+    rr:predicateObjectMap [
+        rr:predicate crm:P1_is_identified_by;
+        		rr:objectMap [
+        rr:parentTriplesMap <#ranke_spelling_map>;
+        rr:joinCondition [
+            rr:child "spellings_id";
+            rr:parent "spellings_id";
+        ];
+           ];
+    ];
+	    rr:predicateObjectMap [
+        rr:predicate pnm:has_spelling_usage;
+		    rr:objectMap [
+        rr:parentTriplesMap <#spelling_usage_map>;
+        rr:joinCondition [
+            rr:child "spellings_id";
+            rr:parent "spellings_id";
+        ];
+           ];
+		   ].
+		   
+<#personal_name_tla_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT personal_names_id, tla, record_id_from_id(personal_names_id) as personal_names_id_short FROM names_tla_temp
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/name/{personal_names_id_short}";
+    ];	
+				rr:predicateObjectMap [
+        rr:predicate skos:closeMatch;
+        rr:objectMap [rr:template "http://aaew.bbaw.de/tla/servlet/GetWcnDetails?wn={tla}";rr:termType rr:IRI; ];
+		].
+<#personal_name_agea_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT personal_names_id, agea, record_id_from_id(personal_names_id) as personal_names_id_short FROM names_agea_temp
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/name/{personal_names_id_short}";
+    ];	
+				rr:predicateObjectMap [
+        rr:predicate skos:closeMatch;
+        rr:objectMap [rr:template "https://www.ifao.egnet.net/bases/agea/noms/?&os={agea}";rr:termType rr:IRI; ];
+		].		
+	
+
+		   		# personal name usage
+<#personal_name_usage_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT personal_names_id, usage_area, usage_area_note, usage_period, usage_period_note, record_id_from_id(personal_names_id) as personal_names_id_short, gender
+FROM personal_names WHERE NOT ISNULL(usage_area) OR NOT ISNULL(usage_period) OR NOT ISNULL (gender)
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/name/{personal_names_id_short}#usage";
+        rr:class pnm:usage;
+    ] ;
+		 rr:predicateObjectMap [
+        rr:predicate crm:P176i_starts_after_the_start_of;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "usage_period";
+            rr:parent "item_name";
+        ];
+           ];
+		   ];
+		   	 rr:predicateObjectMap [
+        rr:predicate crm:P185_ends_before_the_end_of;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "usage_period";
+            rr:parent "item_name";
+        ];
+           ];
+		   ];
+		   
+			 rr:predicateObjectMap [
+        rr:predicate crm:P7_took_place_at;
+        rr:objectMap [
+        rr:parentTriplesMap <#place_map>;
+        rr:joinCondition [
+            rr:child "usage_area";
+            rr:parent "place_name";
+        ];
+           ];
+		   ];
+			rr:predicateObjectMap [
+        rr:predicate pnm:has_usage_period_note;
+        rr:objectMap [ rr:column "usage_period_note" ];
+		  ];
+				rr:predicateObjectMap [
+        rr:predicate pnm:has_usage_area_note;
+        rr:objectMap [ rr:column "usage_area_note" ];
+  
+    ];
+				rr:predicateObjectMap [
+        rr:predicate pnm:has_usage_gender;
+        rr:objectMap [ rr:column "gender" ];
+		  ].
+# ranke_name
+<#ranke_name_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+select
+  personal_names.personal_names_id personal_names_id, record_id_from_id(personal_names.personal_names_id) personal_names_id_short,
+  TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(personal_names.ranke, ';', numbers.n), ';', -1)) ranke
+from
+  (select 1 n union 
+   select 2 union all select 3 union all select 4 union all SELECT 5 union all SELECT 6 union all SELECT 7 union all SELECT 8 union all SELECT 9 union all SELECT 10 union all SELECT 11 union all SELECT 12 union all SELECT 13 union all SELECT 14 union all SELECT 15 union all SELECT 16 union all SELECT 17 union all SELECT 18 union all SELECT 19 union all SELECT 20 union all SELECT 21 union all SELECT 22) numbers INNER JOIN personal_names
+  on CHAR_LENGTH(personal_names.ranke) - CHAR_LENGTH(REPLACE(personal_names.ranke, ';', ''))>=numbers.n-1
+order by
+  personal_names_id, n
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/name/{personal_names_id_short}#ranke" ;
+        rr:class crm:E42_Identifier;
+    ];
+	 rr:predicateObjectMap [
+        rr:predicate rdfs:label;
+        rr:objectMap [ rr:column "ranke" ];
+    ];
+		 rr:predicateObjectMap [
+        rr:predicate crm:P2_has_type;
+        rr:object pnm:ranke;
+    ].		  
+# scheele-schweitzer
+<#scheele-schweitzer_name_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+select
+  personal_names.personal_names_id personal_names_id, record_id_from_id(personal_names.personal_names_id) personal_names_id_short,
+  TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(personal_names.`scheele-schweitzer`, ';', numbers.n), ';', -1)) `scheele-schweitzer`
+from
+  (select 1 n union 
+   select 2 union all select 3 union all select 4 union all SELECT 5 union all SELECT 6 union all SELECT 7 union all SELECT 8 union all SELECT 9 union all SELECT 10 union all SELECT 11 union all SELECT 12 union all SELECT 13 union all SELECT 14 union all SELECT 15 union all SELECT 16 union all SELECT 17 union all SELECT 18 union all SELECT 19 union all SELECT 20 union all SELECT 21 union all SELECT 22) numbers INNER JOIN personal_names
+  on CHAR_LENGTH(personal_names.`scheele-schweitzer`) - CHAR_LENGTH(REPLACE(personal_names.`scheele-schweitzer`, ';', ''))>=numbers.n-1
+order by
+  personal_names_id, n
+  """;];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/name/{personal_names_id_short}#scheele-schweitzer" ;
+        rr:class crm:E42_Identifier;
+    ];
+	 rr:predicateObjectMap [
+        rr:predicate rdfs:label;
+        rr:objectMap [ rr:column "scheele-schweitzer" ];
+    ];
+		 rr:predicateObjectMap [
+        rr:predicate crm:P2_has_type;
+        rr:object pnm:scheele-schweitzer;
+    ].		  
+#Personal_names_form	
+<#personal_name_form_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT *, record_id_from_id(personal_names_id) as personal_names_id_short
+FROM personal_names
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/name/{personal_names_id_short}#form";
+        rr:class ontolex:Form;
+    ];
+				rr:predicateObjectMap [
+        rr:predicate pnm:Egyptological_transliteration;
+        rr:objectMap [ rr:column "personal_name" ];
+    ].		   
+#
+<#personal_name_concept>
+    rr:logicalTable [ rr:sqlQuery """
+SELECT *, record_id_from_id(personal_names_id) as personal_names_id_short FROM personal_names where not isnull(translation_en) or not isnull(translation_de)
+"""; ];
+    rr:subjectMap [
+rr:template "https://pnm.uni-mainz.de/name/{personal_names_id_short}#concept";
+      rr:class skos:Concept;
+    ];
+    rr:predicateObjectMap [
+        rr:predicate    skos:definition;
+        rr:objectMap    [  rr:column "translation_de";rr:language "de";]
+    ];
+	    rr:predicateObjectMap [
+        rr:predicate    skos:definition;
+        rr:objectMap    [  rr:column "translation_en";rr:language "en";]
+    ];
+    .	
+#Personal_names	
+	<#personal_name_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT *, CAST(date_created AS DATETIME) AS date_created_dt, CAST(date_changed AS DATETIME) AS date_changed_dt, record_id_from_id(personal_names_id) as personal_names_id_short
+FROM personal_names
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/name/{personal_names_id_short}";
+        rr:class pnm:personal_name;
+    ];	
+			rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];
+    ];
+	rr:predicateObjectMap [
+        rr:predicate ontolex:canonicalForm;
+		rr:objectMap [
+        rr:parentTriplesMap <#personal_name_form_map>;
+        rr:joinCondition [
+            rr:child "personal_names_id";
+            rr:parent "personal_names_id";
+        ];
+           ];	
+    ];
+
+		    rr:predicateObjectMap [
+        rr:predicate ontolex:denotes;
+		    rr:objectMap [
+        rr:parentTriplesMap <#personal_name_concept>;
+        rr:joinCondition [
+            rr:child "personal_names_id";
+            rr:parent "personal_names_id";
+        ];
+           ];
+		   ];
+   
+	
+	    rr:predicateObjectMap [
+        rr:predicate crm:P1_is_identified_by;
+        		rr:objectMap [
+        rr:parentTriplesMap <#ranke_name_map>;
+        rr:joinCondition [
+            rr:child "personal_names_id";
+            rr:parent "personal_names_id";
+        ];
+           ];
+    ];
+		    rr:predicateObjectMap [
+        rr:predicate crm:P1_is_identified_by;
+        		rr:objectMap [
+        rr:parentTriplesMap <#scheele-schweitzer_name_map>;
+        rr:joinCondition [
+            rr:child "personal_names_id";
+            rr:parent "personal_names_id";
+        ];
+           ];
+    ];
+		    rr:predicateObjectMap [
+        rr:predicate pnm:has_lexical_entry_usage;
+		    rr:objectMap [
+        rr:parentTriplesMap <#personal_name_usage_map>;
+        rr:joinCondition [
+            rr:child "personal_names_id";
+            rr:parent "personal_names_id";
+        ];
+           ];
+		   ];
+		rr:predicateObjectMap [
+        rr:predicate crm:P3_has_note;
+        rr:objectMap [ rr:column "note" ];
+    ].
+	
+
+#alternative_reading	
+<#alternative_reading_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT spellings.personal_names_id as personal_names_id, alternative_readings.personal_names_id as alt_reading, CAST(alternative_readings.date_created AS DATETIME) AS date_created_dt, CAST(alternative_readings.date_changed AS DATETIME) AS date_changed_dt,   record_id_from_id(alternative_readings.alternative_readings_id) as alternative_readings_id_short, record_id_from_id(spellings.personal_names_id) as personal_names_id_short, record_id_from_id(spellings.spellings_id) as spellings_id_short
+FROM alternative_readings LEFT JOIN spellings ON  (alternative_readings.spellings_id = spellings.spellings_id)
+""";];
+ 
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/name/{personal_names_id_short}#{spellings_id_short}_alternative_reading{alternative_readings_id_short}" ;
+        rr:class pnm:alternative_reading;
+    ] ;	   
+				rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];
+    ];
+			    rr:predicateObjectMap [
+        rr:predicate pnm:reads_as;
+		    rr:objectMap [
+        rr:parentTriplesMap <#personal_name_form_map>;
+        rr:joinCondition [
+            rr:child "alt_reading";
+            rr:parent "personal_names_id";
+        ];
+		];
+		].
+<#alternative_reading_map_subj> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT spellings.personal_names_id as personal_names_id, alternative_readings.personal_names_id as alt_reading, CAST(alternative_readings.date_created AS DATETIME) AS date_created_dt, CAST(alternative_readings.date_changed AS DATETIME) AS date_changed_dt,   record_id_from_id(alternative_readings.alternative_readings_id) as alternative_readings_id_short, record_id_from_id(spellings.personal_names_id) as personal_names_id_short, record_id_from_id(spellings.spellings_id) as spellings_id_short
+FROM alternative_readings LEFT JOIN spellings ON  (alternative_readings.spellings_id = spellings.spellings_id)
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/name/{personal_names_id_short}#{spellings_id_short}";
+    ] ;	   
+	rr:predicateObjectMap [
+        rr:predicate pnm:has_alternative_reading;
+        rr:objectMap [ rr:template "https://pnm.uni-mainz.de/name/{personal_names_id_short}#{spellings_id_short}_alternative_reading{alternative_readings_id_short}";];
+    ].
+ 		
+		# name types usage 
+<#name_type_usage_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT name_types_id, usage_area, usage_area_note, usage_period, usage_period_note, record_id_from_id(name_types_id) as name_types_id_short
+FROM name_types WHERE NOT ISNULL(usage_area) OR NOT ISNULL(usage_period)
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/type/{name_types_id_short}#usage" ;
+        rr:class pnm:usage;
+    ] ;	
+	
+		 rr:predicateObjectMap [
+        rr:predicate crm:P185_ends_before_the_end_of;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "usage_period";
+            rr:parent "item_name";
+        ];
+           ];
+		   ];
+		   		 rr:predicateObjectMap [
+        rr:predicate crm:P176i_starts_after_the_start_of;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "usage_period";
+            rr:parent "item_name";
+        ];
+           ];
+		   ];
+		   
+			 rr:predicateObjectMap [
+        rr:predicate crm:P7_took_place_at;
+        rr:objectMap [
+        rr:parentTriplesMap <#place_map>;
+        rr:joinCondition [
+            rr:child "usage_area";
+            rr:parent "place_name";
+        ];
+           ];
+		   ];
+			rr:predicateObjectMap [
+        rr:predicate pnm:has_usage_period_note;
+        rr:objectMap [ rr:column "usage_period_note" ];
+		    ];
+				rr:predicateObjectMap [
+        rr:predicate pnm:has_usage_area_note;
+        rr:objectMap [ rr:column "usage_area_note" ];
+
+    ].		
+#name_types
+<#name_type_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT *, CAST(date_created AS DATETIME) AS date_created_dt, CAST(date_changed AS DATETIME) AS date_changed_dt, record_id_from_id(name_types_id) as name_types_id_short,
+(CASE category
+WHEN 'semantic' THEN 'https://pnm.uni-mainz.de/ontology#semantic_name_type'
+WHEN 'alternative' THEN 'https://pnm.uni-mainz.de/ontology#formal_name_type'
+END) as category_iri
+FROM name_types
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/type/{name_types_id_short}";
+        rr:class pnm:name_type;
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];	
+];		
+		  rr:predicateObjectMap [
+        rr:predicate skos:broader;
+		    rr:objectMap [
+        rr:parentTriplesMap <#name_type_map>;
+        rr:joinCondition [
+            rr:child "parent_id";
+            rr:parent "name_types_id";
+        ];
+		];
+		];
+				rr:predicateObjectMap [
+        rr:predicate rdfs:label;
+        rr:objectMap [ rr:column "title" ];
+    ];
+			rr:predicateObjectMap [
+        rr:predicate crm:P2_has_type;
+        rr:objectMap [ rr:column "category_iri"; rr:termType rr:IRI;];
+    ];
+			rr:predicateObjectMap [
+        rr:predicate crm:P3_has_note;
+        rr:objectMap [ rr:column "note" ];
+    ];
+			    rr:predicateObjectMap [
+        rr:predicate pnm:has_name_type_usage;
+		    rr:objectMap [
+        rr:parentTriplesMap <#name_type_usage_map>;
+        rr:joinCondition [
+            rr:child "name_types_id";
+            rr:parent "name_types_id";
+        ];
+           ];
+		   ].
+#criteria
+<#criterion_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT *, CAST(date_created AS DATETIME) AS date_created_dt, CAST(date_changed AS DATETIME) AS date_changed_dt, record_id_from_id(criteria_id) as criteria_id_short
+FROM criteria
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/criterion/{criteria_id_short}";
+        rr:class pnm:criterion;
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];	
+];		
+
+				rr:predicateObjectMap [
+        rr:predicate skos:prefLabel;
+        rr:objectMap [ rr:column "title" ];
+    ];
+			rr:predicateObjectMap [
+        rr:predicate rdfs:comment;
+        rr:objectMap [ rr:column "criterion"];
+    ];
+		  rr:predicateObjectMap [
+        rr:predicate pnm:refers_to_place;
+		    rr:objectMap [
+        rr:parentTriplesMap <#place_map>;
+        rr:joinCondition [
+            rr:child "production_place";
+            rr:parent "place_name";
+        ];
+		];
+		];
+				  rr:predicateObjectMap [
+        rr:predicate pnm:refers_to_period;
+		    rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "dating";
+            rr:parent "item_name";
+        ];
+		];
+		].	
+	#name_types_xref
+<#name_type_xref_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT *, record_id_from_id(names_types_xref_id) names_types_xref_id_short, record_id_from_id(personal_names_id) personal_names_id_short, record_id_from_id(name_types_id) name_types_id_short
+FROM names_types_xref
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/name/{personal_names_id_short}";
+           ];
+
+		  rr:predicateObjectMap [
+        rr:predicate pnm:has_name_type;
+		    rr:objectMap [
+        rr:parentTriplesMap <#name_type_map>;
+        rr:joinCondition [
+            rr:child "name_types_id";
+            rr:parent "name_types_id";
+        ];
+		];
+		].
+		#title_tla
+			<#title_tla_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT tla, record_id_from_id(titles_id) as titles_id_short FROM titles_tla_temp
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/title/{titles_id_short}";
+    ];	
+				rr:predicateObjectMap [
+        rr:predicate skos:closeMatch;
+        rr:objectMap [rr:template "http://aaew.bbaw.de/tla/servlet/GetWcnDetails?wn={tla}";rr:termType rr:IRI; ];
+		].
+
+	
+
+		 # title usage
+<#title_usage_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT titles_id, usage_area, usage_area_note, usage_period, usage_period_note, record_id_from_id(titles_id) as titles_id_short, gender
+FROM titles WHERE NOT ISNULL(usage_area) OR NOT ISNULL(usage_period) OR NOT ISNULL (gender)
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/title/{titles_id_short}#usage";
+        rr:class pnm:usage;
+    ];			 rr:predicateObjectMap [
+        rr:predicate crm:P185_ends_before_the_end_of;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "usage_period";
+            rr:parent "item_name";
+        ];
+           ];
+		   ];
+		    rr:predicateObjectMap [
+        rr:predicate crm:P176i_starts_after_the_start_of;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "usage_period";
+            rr:parent "item_name";
+        ];
+           ];
+		   ];
+		    rr:predicateObjectMap [
+        rr:predicate crm:P7_took_place_at;
+        rr:objectMap [
+        rr:parentTriplesMap <#place_map>;
+        rr:joinCondition [
+            rr:child "usage_area";
+            rr:parent "place_name";
+        ];
+           ];
+		   ];
+			rr:predicateObjectMap [
+        rr:predicate pnm:has_usage_period_note;
+        rr:objectMap [ rr:column "usage_period_note" ];
+		  ];
+				rr:predicateObjectMap [
+        rr:predicate pnm:has_usage_area_note;
+        rr:objectMap [ rr:column "usage_area_note" ];
+  
+    ];
+				rr:predicateObjectMap [
+        rr:predicate pnm:has_usage_gender;
+        rr:objectMap [ rr:column "gender" ];
+		  ].
+		# ayedi
+<#ayedi_title_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+select
+  titles.titles_id titles_id, record_id_from_id(titles.titles_id) titles_id_short,
+  TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(titles.ayedi, ';', numbers.n), ';', -1)) ayedi
+from
+  (select 1 n union 
+   select 2 union all select 3 union all select 4 union all SELECT 5 union all SELECT 6 union all SELECT 7 union all SELECT 8 union all SELECT 9 union all SELECT 10 union all SELECT 11 union all SELECT 12 union all SELECT 13 union all SELECT 14 union all SELECT 15 union all SELECT 16 union all SELECT 17 union all SELECT 18 union all SELECT 19 union all SELECT 20 union all SELECT 21 union all SELECT 22) numbers
+	INNER JOIN titles
+  on CHAR_LENGTH(titles.ayedi) - CHAR_LENGTH(REPLACE(titles.ayedi, ';', ''))>=numbers.n-1
+order by
+  titles_id, n
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/title/{titles_id_short}#ayedi" ;
+        rr:class crm:E42_Identifier;
+    ];
+	 rr:predicateObjectMap [
+        rr:predicate rdfs:label;
+        rr:objectMap [ rr:column "ayedi" ];
+    ];
+		 rr:predicateObjectMap [
+        rr:predicate crm:P2_has_type;
+        rr:object pnm:ayedi;
+    ].	
+		# taylor
+<#taylor_title_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+select
+  titles.titles_id titles_id, record_id_from_id(titles.titles_id) titles_id_short,
+  TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(titles.taylor, ';', numbers.n), ';', -1)) taylor
+from
+  (select 1 n union 
+   select 2 union all select 3 union all select 4 union all SELECT 5 union all SELECT 6 union all SELECT 7 union all SELECT 8 union all SELECT 9 union all SELECT 10 union all SELECT 11 union all SELECT 12 union all SELECT 13 union all SELECT 14 union all SELECT 15 union all SELECT 16 union all SELECT 17 union all SELECT 18 union all SELECT 19 union all SELECT 20 union all SELECT 21 union all SELECT 22) numbers
+	INNER JOIN titles
+  on CHAR_LENGTH(titles.taylor) - CHAR_LENGTH(REPLACE(titles.taylor, ';', ''))>=numbers.n-1
+order by
+  titles_id, n
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/title/{titles_id_short}#taylor" ;
+        rr:class crm:E42_Identifier;
+    ];
+	 rr:predicateObjectMap [
+        rr:predicate rdfs:label;
+        rr:objectMap [ rr:column "taylor" ];
+    ];
+		 rr:predicateObjectMap [
+        rr:predicate crm:P2_has_type;
+        rr:object pnm:taylor;
+    ].	
+	# hannig
+<#hannig_title_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+select
+  titles.titles_id titles_id, record_id_from_id(titles.titles_id) titles_id_short,
+  TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(titles.hannig, ';', numbers.n), ';', -1)) hannig
+from
+  (select 1 n union 
+   select 2 union all select 3 union all select 4 union all SELECT 5 union all SELECT 6 union all SELECT 7 union all SELECT 8 union all SELECT 9 union all SELECT 10 union all SELECT 11 union all SELECT 12 union all SELECT 13 union all SELECT 14 union all SELECT 15 union all SELECT 16 union all SELECT 17 union all SELECT 18 union all SELECT 19 union all SELECT 20 union all SELECT 21 union all SELECT 22) numbers
+	INNER JOIN titles
+  on CHAR_LENGTH(titles.hannig) - CHAR_LENGTH(REPLACE(titles.hannig, ';', ''))>=numbers.n-1
+order by
+  titles_id, n
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/title/{titles_id_short}#hannig" ;
+        rr:class crm:E42_Identifier;
+    ];
+	 rr:predicateObjectMap [
+        rr:predicate rdfs:label;
+        rr:objectMap [ rr:column "hannig" ];
+    ];
+		 rr:predicateObjectMap [
+        rr:predicate crm:P2_has_type;
+        rr:object pnm:hannig2;
+    ].		
+	# ward_fischer
+<#ward_fischer_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+select
+  titles.titles_id titles_id, record_id_from_id(titles.titles_id) titles_id_short,
+  TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(titles.ward_fischer, ';', numbers.n), ';', -1)) ward_fischer
+from
+  (select 1 n union 
+   select 2 union all select 3 union all select 4 union all SELECT 5 union all SELECT 6 union all SELECT 7 union all SELECT 8 union all SELECT 9 union all SELECT 10 union all SELECT 11 union all SELECT 12 union all SELECT 13 union all SELECT 14 union all SELECT 15 union all SELECT 16 union all SELECT 17 union all SELECT 18 union all SELECT 19 union all SELECT 20 union all SELECT 21 union all SELECT 22) numbers
+	INNER JOIN titles
+  on CHAR_LENGTH(titles.ward_fischer) - CHAR_LENGTH(REPLACE(titles.ward_fischer, ';', ''))>=numbers.n-1
+order by
+  titles_id, n
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/title/{titles_id_short}#ward_fischer" ;
+        rr:class crm:E42_Identifier;
+    ];
+	 rr:predicateObjectMap [
+        rr:predicate rdfs:label;
+        rr:objectMap [ rr:column "ward_fischer" ];
+    ];
+		 rr:predicateObjectMap [
+        rr:predicate crm:P2_has_type;
+        rr:object pnm:ward_fischer;
+    ].		  	
+#titles_form	
+	<#title_form_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT titles_id, title, record_id_from_id(titles_id) as titles_id_short
+FROM titles
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/title/{titles_id_short}#form";
+        rr:class ontolex:Form;
+    ];
+				rr:predicateObjectMap [
+        rr:predicate pnm:Egyptological_transliteration;
+        rr:objectMap [ rr:column "title" ];
+    ].		   
+<#title_concept> a rr:TriplesMap;
+    rr:logicalTable [ rr:sqlQuery """
+SELECT *, record_id_from_id(titles_id) as titles_id_short FROM titles where not isnull(translation_en) or not isnull(translation_de)
+"""; ];
+    rr:subjectMap [
+rr:template "https://pnm.uni-mainz.de/title/{titles_id_short}#concept";
+      rr:class skos:Concept;
+    ];
+    rr:predicateObjectMap [
+        rr:predicate    skos:definition;
+        rr:objectMap    [  rr:column "translation_de";rr:language "de";]
+    ];
+	    rr:predicateObjectMap [
+        rr:predicate    skos:definition;
+        rr:objectMap    [  rr:column "translation_en";rr:language "en";]
+    ];
+    .	
+
+#Titles	
+	<#title_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT *, CAST(date_created AS DATETIME) AS date_created_dt, CAST(date_changed AS DATETIME) AS date_changed_dt, record_id_from_id(titles_id) as titles_id_short
+FROM titles
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/title/{titles_id_short}";
+        rr:class pnm:title;
+    ];	
+			rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];
+    ];
+			    rr:predicateObjectMap [
+        rr:predicate ontolex:canonicalForm;
+		    rr:objectMap [
+        rr:parentTriplesMap <#title_form_map>;
+        rr:joinCondition [
+            rr:child "titles_id";
+            rr:parent "titles_id";
+        ];
+           ];
+		   ];
+		   			    rr:predicateObjectMap [
+        rr:predicate ontolex:denotes;
+		    rr:objectMap [
+        rr:parentTriplesMap <#title_concept>;
+        rr:joinCondition [
+            rr:child "titles_id";
+            rr:parent "titles_id";
+        ];
+           ];
+		   ];
+
+	    rr:predicateObjectMap [
+        rr:predicate crm:P1_is_identified_by;
+        		rr:objectMap [
+        rr:parentTriplesMap <#hannig_title_map>;
+        rr:joinCondition [
+            rr:child "titles_id";
+            rr:parent "titles_id";
+        ];
+           ];
+    ];
+		    rr:predicateObjectMap [
+        rr:predicate crm:P1_is_identified_by;
+        		rr:objectMap [
+        rr:parentTriplesMap <#ayedi_title_map>;
+        rr:joinCondition [
+            rr:child "titles_id";
+            rr:parent "titles_id";
+        ];
+           ];
+    ];
+		    rr:predicateObjectMap [
+        rr:predicate crm:P1_is_identified_by;
+        		rr:objectMap [
+        rr:parentTriplesMap <#taylor_title_map>;
+        rr:joinCondition [
+            rr:child "titles_id";
+            rr:parent "titles_id";
+        ];
+           ];
+    ];
+		    rr:predicateObjectMap [
+        rr:predicate crm:P1_is_identified_by;
+        		rr:objectMap [
+        rr:parentTriplesMap <#ward_fischer_map>;
+        rr:joinCondition [
+            rr:child "titles_id";
+            rr:parent "titles_id";
+        ];
+           ];
+    ];
+		    rr:predicateObjectMap [
+        rr:predicate pnm:has_lexical_entry_usage;
+		    rr:objectMap [
+        rr:parentTriplesMap <#title_usage_map>;
+        rr:joinCondition [
+            rr:child "titles_id";
+            rr:parent "titles_id";
+        ];
+           ];
+		   ];
+		rr:predicateObjectMap [
+        rr:predicate crm:P3_has_note;
+        rr:objectMap [ rr:column "note" ];
+    ].
+#attested_bonds
+
+	<#bond_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT bonds_id, bonds.subject_id as subject_id,bonds.object_id as object_id,bonds.predicate as predicate, bonds.wording as wording, CAST(bonds.date_created AS DATETIME) AS date_created_dt, CAST(bonds.date_changed AS DATETIME) AS date_changed_dt, record_id_from_id(bonds_id) as bonds_id_short, record_id_from_id(attestations.inscriptions_id) as inscriptions_id_short
+FROM bonds left join attestations ON (attestations.attestations_id = bonds.subject_id)
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/inscription/{inscriptions_id_short}#bond_{bonds_id_short}";
+        rr:class pnm:attested_bond;
+    ];	
+			rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];
+    ];	
+		rr:predicateObjectMap [
+        rr:predicate pnm:attested_bond_statement_subject;
+		    rr:objectMap [
+        rr:parentTriplesMap <#attestation_map>;
+        rr:joinCondition [
+            rr:child "subject_id";
+            rr:parent "attestations_id";
+        ];
+           ];
+		   ];
+		   		rr:predicateObjectMap [
+        rr:predicate pnm:attested_bond_statement_object;
+		    rr:objectMap [
+        rr:parentTriplesMap <#attestation_map>;
+        rr:joinCondition [
+            rr:child "object_id";
+            rr:parent "attestations_id";
+        ];
+           ];
+		   ];
+ 		 rr:predicateObjectMap [
+        rr:predicate pnm:bond_statement_predicate;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "predicate";
+            rr:parent "item_name";
+        ];
+           ];
+		   ];
+			rr:predicateObjectMap [
+        rr:predicate pnm:has_wording;
+        rr:objectMap [ rr:column "wording";];
+    ].
+	#person's life
+<#person_life_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT persons_id, dating, dating_note, region, region_note, record_id_from_id(persons_id) as persons_id_short
+FROM persons WHERE NOT ISNULL(dating) OR NOT ISNULL(region)
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/person/{persons_id_short}#life" ;
+        rr:class pnm:life;
+    ] ;	
+	
+		 rr:predicateObjectMap [
+        rr:predicate crm:P176i_starts_after_the_start_of;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "dating";
+            rr:parent "item_name";
+        ];
+           ];
+		   ];
+		   		 rr:predicateObjectMap [
+        rr:predicate crm:P185_ends_before_the_end_of;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "dating";
+            rr:parent "item_name";
+        ];
+           ];
+		   ];
+		   
+			 rr:predicateObjectMap [
+        rr:predicate crm:P7_took_place_at;
+        rr:objectMap [
+        rr:parentTriplesMap <#place_map>;
+        rr:joinCondition [
+            rr:child "region";
+            rr:parent "place_name";
+        ];
+           ];
+		   ];
+			rr:predicateObjectMap [
+        rr:predicate pnm:has_dating_note;
+        rr:objectMap [ rr:column "dating_note" ];
+		    ];
+				rr:predicateObjectMap [
+        rr:predicate pnm:has_origin_note;
+        rr:objectMap [ rr:column "region_note" ];
+
+    ].
+	#persons
+
+	<#person_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT *, record_id_from_id(persons_id) as persons_id_short, CAST(date_created AS DATETIME) AS date_created_dt, CAST(date_changed AS DATETIME) AS date_changed_dt
+FROM persons
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/person/{persons_id_short}";
+        rr:class crm:E21_Person;
+    ];	
+			rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];
+    ];	
+			   		rr:predicateObjectMap [
+        rr:predicate pnm:person_gender;
+        rr:objectMap [ rr:column "gender" ];
+    ];
+rr:predicateObjectMap [
+        rr:predicate pnm:person_title_string;
+        rr:objectMap [ rr:column "title_string" ];
+    ];
+	rr:predicateObjectMap [
+        rr:predicate pnm:person_personal_names;
+        rr:objectMap [ rr:column "personal_name" ];
+    ];
+			    rr:predicateObjectMap [
+        rr:predicate pnm:lived;
+		    rr:objectMap [
+        rr:parentTriplesMap <#person_life_map>;
+        rr:joinCondition [
+            rr:child "persons_id";
+            rr:parent "persons_id";
+        ];
+           ];
+		   ];
+		rr:predicateObjectMap [
+        rr:predicate crm:P3_has_note;
+        rr:objectMap [ rr:column "note"; ];
+    ].
+	#persons_bonds
+
+	<#persons_bond_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT persons_bonds.subject_id as subject_id,persons_bonds.object_id as object_id,persons_bonds.predicate as predicate, CAST(persons_bonds.date_created AS DATETIME) AS date_created_dt, CAST(persons_bonds.date_changed AS DATETIME) AS date_changed_dt, record_id_from_id(persons_bonds_id) as persons_bonds_id_short, record_id_from_id(subject_id) as persons_id_short
+FROM persons_bonds 
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/person/{persons_id_short}#bond_{persons_bonds_id_short}";
+        rr:class pnm:persons_bond;
+    ];	
+			rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];
+    ];	
+		rr:predicateObjectMap [
+        rr:predicate pnm:persons_bond_statement_subject;
+		    rr:objectMap [
+        rr:parentTriplesMap <#person_map>;
+        rr:joinCondition [
+            rr:child "subject_id";
+            rr:parent "persons_id";
+        ];
+           ];
+		   ];
+		   		rr:predicateObjectMap [
+        rr:predicate pnm:persons_bond_statement_object;
+		    rr:objectMap [
+        rr:parentTriplesMap <#person_map>;
+        rr:joinCondition [
+            rr:child "object_id";
+            rr:parent "persons_id";
+        ];
+           ];
+		   ];
+ 		 rr:predicateObjectMap [
+        rr:predicate pnm:bond_statement_predicate;
+        rr:objectMap [
+        rr:parentTriplesMap <#thesaurus_map>;
+        rr:joinCondition [
+            rr:child "predicate";
+            rr:parent "item_name";
+        ];
+           ];
+		   ].
+#Biblio_refs	
+<#biblio_refs_prep>  a rr:R2RMLView;
+rr:sqlQuery """
+SELECT *, CAST(date_created AS DATETIME) AS date_created_dt, CAST(date_changed AS DATETIME) AS date_changed_dt,
+(CASE table_id_from_id(object_id)
+WHEN 0 THEN 'thesaurus' 
+WHEN 14 THEN 'criterion'
+WHEN 2 THEN 'publication'
+WHEN 4 THEN 'inscription'
+WHEN 23 THEN 'group'
+WHEN 20 THEN 'workshop'
+WHEN 21 THEN 'inscriptions_workshops_xref'
+WHEN 22 THEN 'place'
+WHEN 25 THEN 'inv_no'
+WHEN 26 THEN 'collection'
+WHEN 8 THEN 'attestation'
+WHEN 15 THEN 'spellings_attestations_xref'
+WHEN 1 THEN 'persons_attestations_xref'
+WHEN 27 THEN 'person'
+WHEN 28 THEN 'title_att'
+WHEN 5 THEN 'title'
+WHEN 29 THEN 'spelling'
+WHEN 9 THEN 'alternative_reading'
+WHEN 17 THEN 'name'
+WHEN 30 THEN 'type'
+WHEN 31 THEN 'names_types_xref'
+WHEN 24 THEN 'bond'
+WHEN 11 THEN 'persons_bond'
+WHEN 3 THEN 'title_relation'
+END) as object, 
+IF ((reference_type LIKE 'cp%' OR reference_type LIKE '% cp,%' OR reference_type LIKE '% cp'), IF(NOT reference_type LIKE '%cp (i)%' AND NOT reference_type LIKE '%illegible%', 'https://pnm.uni-mainz.de/ontology#colour_photo','https://pnm.uni-mainz.de/ontology#poor_or_partial_colour_photo'),NULL) as colour_photo,
+IF ((reference_type LIKE 'bp%' OR reference_type LIKE '% bp,%' OR reference_type LIKE '% bp'), IF(NOT reference_type LIKE '%bp (i)%' AND NOT reference_type LIKE '%illegible%', 'https://pnm.uni-mainz.de/ontology#bw_photo','https://pnm.uni-mainz.de/ontology#poor_or_partial_bw_photo'),NULL) as bw_photo,
+IF ((reference_type LIKE 's%' OR reference_type LIKE '% s,%' OR reference_type LIKE '% s'), IF(NOT reference_type LIKE '%s (i)%', 'https://pnm.uni-mainz.de/ontology#sketch','https://pnm.uni-mainz.de/ontology#partial_sketch'),NULL) as sketch,
+IF ((reference_type LIKE 'h%' OR reference_type LIKE '% h,%' OR reference_type LIKE '% h'), IF(NOT reference_type LIKE '%h (i)%', 'https://pnm.uni-mainz.de/ontology#hieroglyphic_transcription','https://pnm.uni-mainz.de/ontology#partial_hieroglyphic_transcription'),NULL) as hieroglyphic_transcription,
+IF (reference_type LIKE 't%' OR reference_type LIKE '% t,%' OR reference_type LIKE '% t','https://pnm.uni-mainz.de/ontology#translation',NULL) as translation,
+IF (reference_type LIKE 'd%' OR reference_type LIKE '% d,%' OR reference_type LIKE '% d','https://pnm.uni-mainz.de/ontology#description',NULL) as description,
+IF (reference_type LIKE 'm%' OR reference_type LIKE '% m,%' OR reference_type LIKE '% m','https://pnm.uni-mainz.de/ontology#mention',NULL) as mention,
+record_id_from_id(object_id) as object_id_short, record_id_from_id(biblio_refs_id) as biblio_refs_id_short
+FROM biblio_refs
+""".	
+
+<#biblio_refs_map> a rr:TriplesMap;
+	    rr:logicalTable <#biblio_refs_prep>;
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/{object}/{object_id_short}#biblio_ref_{biblio_refs_id_short}";
+        rr:class pnm:biblio_ref;
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:created;
+        rr:objectMap [ rr:column "date_created_dt"; rr:datatype xsd:dateTime;];
+    ];
+		rr:predicateObjectMap [
+        rr:predicate dcterms:modified;
+        rr:objectMap [ rr:column "date_changed_dt"; rr:datatype xsd:dateTime;];
+    ];
+    rr:predicateObjectMap [
+        rr:predicate pnm:document_refers_to;
+        rr:objectMap [ rr:template "https://pnm.uni-mainz.de/{object}/{object_id_short}" ];
+    ];
+	    rr:predicateObjectMap [
+        rr:predicate pnm:has_reference_type;
+        rr:objectMap [ rr:column "colour_photo"; rr:termType rr:IRI; ];
+		rr:objectMap [ rr:column "bw_photo"; rr:termType rr:IRI; ];
+		rr:objectMap [ rr:column "sketch"; rr:termType rr:IRI; ];
+		rr:objectMap [ rr:column "hieroglyphic_transcription"; rr:termType rr:IRI; ];
+		rr:objectMap [ rr:column "translation"; rr:termType rr:IRI; ];
+		rr:objectMap [ rr:column "description"; rr:termType rr:IRI; ];
+		rr:objectMap [ rr:column "mention"; rr:termType rr:IRI; ];
+    ];
+		    rr:predicateObjectMap [
+        rr:predicate dcterms:source;
+		    rr:objectMap [
+        rr:parentTriplesMap <#publications_map>;
+        rr:joinCondition [
+            rr:child "source_id";
+            rr:parent "publications_id";
+        ];
+           ];
+		   ];
+		   		    rr:predicateObjectMap [
+        rr:predicate dcterms:source;
+		    rr:objectMap [
+        rr:parentTriplesMap <#biblio_refs_source_map>;
+        rr:joinCondition [
+            rr:child "biblio_refs_id";
+            rr:parent "biblio_refs_id";
+        ];
+           ];
+		   ];
+
+				    rr:predicateObjectMap [
+        rr:predicate pnm:reference_location;
+        rr:objectMap [ rr:column "pages" ];
+		 ];
+				    rr:predicateObjectMap [
+        rr:predicate crm:P3_has_note;
+        rr:objectMap [ rr:column "note" ];
+    ].
+<#biblio_refs_source_map> a rr:TriplesMap;
+    rr:logicalTable [rr:sqlQuery """
+SELECT *, record_id_from_id(biblio_refs_id) as biblio_refs_id_short, record_id_from_id(object_id) as object_id_short,
+(CASE table_id_from_id(object_id)
+WHEN 0 THEN 'thesaurus' 
+WHEN 14 THEN 'criterion'
+WHEN 2 THEN 'publication'
+WHEN 4 THEN 'inscription'
+WHEN 23 THEN 'group'
+WHEN 20 THEN 'workshop'
+WHEN 21 THEN 'inscriptions_workshops_xref'
+WHEN 22 THEN 'place'
+WHEN 25 THEN 'inv_no'
+WHEN 26 THEN 'collection'
+WHEN 8 THEN 'attestation'
+WHEN 15 THEN 'spellings_attestations_xref'
+WHEN 1 THEN 'persons_attestations_xref'
+WHEN 27 THEN 'person'
+WHEN 28 THEN 'title_att'
+WHEN 5 THEN 'title'
+WHEN 29 THEN 'spelling'
+WHEN 9 THEN 'alternative_reading'
+WHEN 17 THEN 'name'
+WHEN 30 THEN 'type'
+WHEN 31 THEN 'names_types_xref'
+WHEN 24 THEN 'bond'
+WHEN 11 THEN 'persons_bond'
+WHEN 3 THEN 'title_relation'
+END) as object 
+FROM biblio_refs
+WHERE not isnull(source_url) or not isnull(source_title)
+""";];
+    rr:subjectMap [
+        rr:template "https://pnm.uni-mainz.de/{object}/{object_id_short}#biblio_ref_{biblio_refs_id_short}_source";
+        rr:class crm:E31_document, dcterms:BibliographicResource;
+    ];
+	 rr:predicateObjectMap [
+        rr:predicate pav:sourceAccessedAt;
+        rr:objectMap [ rr:column "source_url" ];
+		 ];
+		    rr:predicateObjectMap [
+        rr:predicate dcterms:title;
+        rr:objectMap [ rr:column "source_title" ];
+		 ];
+		    rr:predicateObjectMap [
+        rr:predicate pav:sourceLastAccessedOn;
+        rr:objectMap [ rr:column "accessed_on" ];
+		 ].
